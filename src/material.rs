@@ -3,7 +3,7 @@ use crate::ray::Ray;
 use crate::vec3::Vec3;
 use std::ops::Neg;
 
-pub trait Material {
+pub trait Material: Send + Sync {
     fn scatter(&self, r_in: &Ray, hit: &HitRecord) -> Option<(Vec3, Ray)>;
 }
 

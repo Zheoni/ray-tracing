@@ -1,6 +1,6 @@
+use rand::Rng;
 use std::cmp::PartialEq;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
-use rand::Rng;
 
 /// This sets the error while comparing floats in Vec3s.
 const FLOAT_CMP_ERROR: f64 = 1e-8;
