@@ -182,12 +182,6 @@ fn main() -> Result<(), std::io::Error> {
         num_cpus::get_physical()
     };
 
-    let mut handles = Vec::new();
-
-    let scanlines_counter = Arc::new(AtomicUsize::new(image_height));
-
-    let start_instant = Instant::now();
-
     if config.is_present("debug") {
         eprintln!("Resolution: {}x{}", image_width, image_height);
         eprintln!("Aspect ratio: {}", aspect_ratio);
@@ -195,20 +189,35 @@ fn main() -> Result<(), std::io::Error> {
         eprintln!("Ray depth: {}", max_depth);
     }
 
+    let mut handles = Vec::new();
+
+    let scanlines_counter = Arc::new(AtomicUsize::new(image_height));
+
+    // Calculations on how to distribute the scanlines evenly
+    let h = image_height / cpus + if image_height % cpus == 0 { 0 } else { 1 };
+    let l = image_height / cpus;
+
+    let nh = if h == l {
+        cpus
+    } else {
+        cpus - (cpus * h - image_height) / (h - l)
+    };
+
+    let mut w = 0;
+
     eprintln!("Rendering with {} cores...", cpus);
+    let start_instant = Instant::now();
     for t in 0..cpus {
         let cam = Arc::clone(&cam);
         let world = Arc::clone(&world);
         let image = Arc::clone(&image);
         let scanlines_counter = Arc::clone(&scanlines_counter);
 
-        let w = image_height / cpus;
-        let start = t * w;
-        let end = if t == cpus - 1 {
-            image_height
-        } else {
-            (t + 1) * w
-        };
+        let s = if t < nh { h } else { l };
+        let start = w;
+        let end = w + s;
+        w += s;
+
         let handle = thread::spawn(move || {
             for j in start..end {
                 for i in 0..image_width {
