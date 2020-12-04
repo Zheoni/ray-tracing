@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 rand = "0.7.3"
 num_cpus = "1.13.0"
+clap = { features = ["yaml"], version = "2.33.3" }
+pbr = "1.0.3"

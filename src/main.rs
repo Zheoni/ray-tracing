@@ -11,12 +11,17 @@ use hittable::{Hittable, HittableList};
 use image::Image;
 use vec3::*;
 
+use std::fs::File;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Instant;
 
 use rand::Rng;
+#[macro_use]
+extern crate clap;
+use clap::App;
+use pbr::ProgressBar;
 
 fn gen_random_scene() -> HittableList {
     use material::*;
@@ -108,15 +113,46 @@ fn gen_random_scene() -> HittableList {
 }
 
 fn main() -> Result<(), std::io::Error> {
+    let yaml = load_yaml!("cli.yaml");
+    let config = App::from_yaml(yaml).get_matches();
+
+    let mut file: Box<dyn std::io::Write> = if config.is_present("stdout") {
+        Box::new(std::io::stdout())
+    } else {
+        let output = config.value_of("output").unwrap();
+        Box::new(File::create(output)?)
+    };
+
     // Image
-    let aspect_ratio = 16.0 / 9.0;
-    let image_height: usize = 1440;
+    let aspect_ratio = {
+        let r = config.value_of("aspect_ratio").unwrap();
+        let p: Vec<_> = r.split('/').map(str::parse::<usize>).collect();
+        assert_eq!(p.len(), 2, "Invalid aspect ratio format");
+        let w = p[0].as_ref().expect("Invalid aspect ratio width");
+        let h = p[1].as_ref().expect("Invalid aspect ratio height");
+        *w as f64 / *h as f64
+    };
+    let image_height: usize = config
+        .value_of("image_height")
+        .unwrap()
+        .parse()
+        .expect("Invalid image height");
     let image_width: usize = (image_height as f64 * aspect_ratio).floor() as usize;
 
     let image = Arc::new(Mutex::new(Image::new(image_width, image_height)));
 
-    let samples_per_pixel: usize = 500; // Antialias / noise
-    let max_depth = 50; // Max recursive rays
+    // Antialias / noise
+    let samples_per_pixel: usize = config
+        .value_of("samples_per_pixel")
+        .unwrap()
+        .parse()
+        .expect("Invalid spp");
+    // Max recursive rays
+    let max_depth: u32 = config
+        .value_of("ray_depth")
+        .unwrap()
+        .parse()
+        .expect("Invalid ray depth");
 
     // World
     let world = Arc::new(gen_random_scene());
@@ -140,12 +176,24 @@ fn main() -> Result<(), std::io::Error> {
     ));
 
     // Render
-    let cpus = num_cpus::get_physical();
+    let cpus: usize = if let Some(cpus) = config.value_of("cores") {
+        cpus.parse().expect("Invalid number of cores")
+    } else {
+        num_cpus::get_physical()
+    };
+
     let mut handles = Vec::new();
 
     let scanlines_counter = Arc::new(AtomicUsize::new(image_height));
 
     let start_instant = Instant::now();
+
+    if config.is_present("debug") {
+        eprintln!("Resolution: {}x{}", image_width, image_height);
+        eprintln!("Aspect ratio: {}", aspect_ratio);
+        eprintln!("SPP: {}", samples_per_pixel);
+        eprintln!("Ray depth: {}", max_depth);
+    }
 
     eprintln!("Rendering with {} cores...", cpus);
     for t in 0..cpus {
@@ -183,14 +231,21 @@ fn main() -> Result<(), std::io::Error> {
                         image[(i, j)] = pixel / samples_per_pixel as f64;
                     }
                 }
-                let num = scanlines_counter.fetch_sub(1, Ordering::Relaxed);
-                if t == cpus - 1 {
-                    eprint!("\rScanlines remaining: {:>6}", num);
-                }
+                scanlines_counter.fetch_sub(1, Ordering::Relaxed);
             }
         });
         handles.push(handle);
     }
+
+    let mut num = image_height;
+    let mut pb = ProgressBar::new(image_height as u64);
+    while num > 0 {
+        num = scanlines_counter.load(Ordering::Relaxed);
+        pb.set((image_height - num) as u64);
+        thread::sleep(std::time::Duration::from_millis(200));
+    }
+    pb.finish();
+
     for h in handles {
         h.join().unwrap();
     }
@@ -210,7 +265,6 @@ fn main() -> Result<(), std::io::Error> {
 
     // Saving
     eprintln!("Writing image...");
-    let mut file = std::fs::File::create("image.ppm")?;
     {
         let image = image.lock().unwrap();
         image.write_as_ppm(&mut file)?;
