@@ -49,3 +49,10 @@ args:
     - debug:
         short: d
         help: Prints configuration of the render.
+    - scene:
+        takes_value: true
+        required: false
+        possible_values:
+            - spheres
+            - bouncing_spheres
+        default_value: spheres

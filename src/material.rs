@@ -23,7 +23,7 @@ pub struct Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _r_in: &Ray, hit: &HitRecord) -> Option<(Vec3, Ray)> {
+    fn scatter(&self, r_in: &Ray, hit: &HitRecord) -> Option<(Vec3, Ray)> {
         let mut scatter_direction = hit.normal + Vec3::random_unit_vector();
 
         // Catch scatter direction near 0
@@ -31,7 +31,7 @@ impl Material for Lambertian {
             scatter_direction = hit.normal;
         }
 
-        let scattered = Ray::new(hit.point, scatter_direction);
+        let scattered = Ray::new(hit.point, scatter_direction, r_in.time);
         let attenuation = self.albedo;
         Some((attenuation, scattered))
     }
@@ -48,7 +48,11 @@ impl Material for Metal {
 
         let fuzz = self.fuzz.min(1.0);
 
-        let scattered = Ray::new(hit.point, reflected + fuzz * Vec3::random_in_unit_sphere());
+        let scattered = Ray::new(
+            hit.point,
+            reflected + fuzz * Vec3::random_in_unit_sphere(),
+            r_in.time,
+        );
         let attenuation = self.albedo;
         if scattered.direction.dot(&hit.normal) > 0.0 {
             Some((attenuation, scattered))
@@ -94,7 +98,7 @@ impl Material for Dielectric {
             refract(&unit_direction, &hit.normal, refraction_ratio)
         };
 
-        let scattered = Ray::new(hit.point, direction);
+        let scattered = Ray::new(hit.point, direction, r_in.time);
         Some((attenuation, scattered))
     }
 }

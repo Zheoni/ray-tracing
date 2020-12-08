@@ -41,7 +41,10 @@ impl RenderConfig {
 }
 
 pub fn render(config: RenderConfig) -> (Image, Duration) {
-    let image = Arc::new(Mutex::new(Image::new(config.image_width, config.image_height)));
+    let image = Arc::new(Mutex::new(Image::new(
+        config.image_width,
+        config.image_height,
+    )));
 
     if config.print_debug {
         eprintln!("Resolution: {}x{}", config.image_width, config.image_height);
@@ -56,7 +59,12 @@ pub fn render(config: RenderConfig) -> (Image, Duration) {
     let scanlines_counter = Arc::new(AtomicUsize::new(0));
 
     // Calculations on how to distribute the scanlines evenly
-    let high = config.image_height / config.cpus + if config.image_height % config.cpus == 0 { 0 } else { 1 };
+    let high = config.image_height / config.cpus
+        + if config.image_height % config.cpus == 0 {
+            0
+        } else {
+            1
+        };
     let low = config.image_height / config.cpus;
 
     let n_high = if high == low {
@@ -86,8 +94,10 @@ pub fn render(config: RenderConfig) -> (Image, Duration) {
                 for i in 0..config.image_width {
                     let mut pixel = Vec3::zero();
                     for _ in 0..config.samples_per_pixel {
-                        let u = (i as f64 + rand::random::<f64>()) / (config.image_width - 1) as f64;
-                        let v = (j as f64 + rand::random::<f64>()) / (config.image_height - 1) as f64;
+                        let u =
+                            (i as f64 + rand::random::<f64>()) / (config.image_width - 1) as f64;
+                        let v =
+                            (j as f64 + rand::random::<f64>()) / (config.image_height - 1) as f64;
                         let r = cam.get_ray(u, v);
                         pixel += r.ray_color(world.clone(), config.max_depth);
                     }

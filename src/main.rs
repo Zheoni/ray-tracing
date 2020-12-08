@@ -37,6 +37,7 @@ pub struct Config {
     show_progress_bar: bool,
     print_debug: bool,
     output: Output,
+    scene_name: String,
 }
 
 fn get_config() -> Config {
@@ -45,12 +46,12 @@ fn get_config() -> Config {
 
     let image_height: usize = args
         .value_of("image_height")
-        .unwrap()
+        .unwrap_or("1440")
         .parse()
         .expect("Invalid image height");
 
     let aspect_ratio = {
-        let r = args.value_of("aspect_ratio").unwrap();
+        let r = args.value_of("aspect_ratio").unwrap_or("16/9");
         let p: Vec<_> = r.split('/').map(str::parse::<usize>).collect();
         assert_eq!(p.len(), 2, "Invalid aspect ratio format");
         let w = p[0].as_ref().expect("Invalid aspect ratio width");
@@ -61,13 +62,13 @@ fn get_config() -> Config {
     // Antialias / noise
     let samples_per_pixel: usize = args
         .value_of("samples_per_pixel")
-        .unwrap()
+        .unwrap_or("500")
         .parse()
         .expect("Invalid spp");
     // Max recursive rays
     let max_depth: u32 = args
         .value_of("ray_depth")
-        .unwrap()
+        .unwrap_or("50")
         .parse()
         .expect("Invalid ray depth");
 
@@ -87,6 +88,8 @@ fn get_config() -> Config {
         Output::File(filename, format)
     };
 
+    let scene_name = args.value_of("scene").unwrap_or("spheres").to_string();
+
     Config {
         image_height,
         aspect_ratio,
@@ -96,6 +99,7 @@ fn get_config() -> Config {
         show_progress_bar: true,
         print_debug,
         output,
+        scene_name,
     }
 }
 
@@ -108,7 +112,9 @@ fn main() -> Result<(), std::io::Error> {
     }
 
     // World
-    let world = Arc::new(scenes::randon_spheres());
+    let scene =
+        scenes::gen_scene_from_name(&config.scene_name).expect("Cannot build unknown scene");
+    let world = Arc::new(scene);
 
     // Camera
     let lookfrom = Vec3::new(12.0, 2.0, 3.0);
@@ -117,6 +123,8 @@ fn main() -> Result<(), std::io::Error> {
     let dist_to_focus = 10.0;
     let vfov = 20.0;
     let aperture = 0.1;
+    let time0 = 0.0;
+    let time1 = 1.0;
 
     let cam = Arc::new(Camera::new(
         lookfrom,
@@ -126,6 +134,8 @@ fn main() -> Result<(), std::io::Error> {
         config.aspect_ratio,
         aperture,
         dist_to_focus,
+        time0,
+        time1,
     ));
 
     // Render

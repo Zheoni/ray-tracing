@@ -6,10 +6,9 @@ use std::sync::Arc;
 /// Representation of a Ray for the raytracer.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Ray {
-    /// Origin point of the Ray
     pub origin: Vec3,
-    /// Direction of the Ray
     pub direction: Vec3,
+    pub time: f64,
 }
 
 impl Ray {
@@ -22,8 +21,12 @@ impl Ray {
     ///     unit vector but it is not enforced.
     ///
     /// Keep in mind that the Ray takes the ownership of the Vec3s when it is created.
-    pub fn new(origin: Vec3, direction: Vec3) -> Self {
-        Ray { origin, direction }
+    pub fn new(origin: Vec3, direction: Vec3, time: f64) -> Self {
+        Ray {
+            origin,
+            direction,
+            time,
+        }
     }
 
     /// Returns the position of the Ray *at* time `t`.
@@ -61,15 +64,28 @@ mod tests {
     fn create() {
         let origin = Vec3::new(1.0, 1.0, 1.0);
         let direction = Vec3::new(1.0, 0.0, 0.0);
-        let ray = Ray::new(origin, direction);
-        assert_eq!(ray, Ray { origin, direction });
+        let time = 0.0;
+        let ray = Ray::new(origin, direction, time);
+        assert_eq!(
+            ray,
+            Ray {
+                origin,
+                direction,
+                time
+            }
+        );
     }
 
     #[test]
     fn ray_at() {
         let origin = Vec3::new(1.0, 1.0, 1.0);
         let direction = Vec3::new(1.0, 0.0, 0.0);
-        let ray = Ray { origin, direction };
+        let time = 0.0;
+        let ray = Ray {
+            origin,
+            direction,
+            time,
+        };
         assert_eq!(ray.at(14.0), Vec3::new(15.0, 1.0, 1.0));
     }
 }
