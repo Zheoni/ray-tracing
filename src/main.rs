@@ -1,3 +1,5 @@
+mod aabb;
+mod bvh;
 mod camera;
 mod hittable;
 mod image;
@@ -114,7 +116,8 @@ fn main() -> Result<(), std::io::Error> {
     // World
     let scene =
         scenes::gen_scene_from_name(&config.scene_name).expect("Cannot build unknown scene");
-    let world = Arc::new(scene);
+    let scene_tree = bvh::BVHNode::from_scene(scene, 0.0, 1.0);
+    let world = Arc::new(scene_tree);
 
     // Camera
     let lookfrom = Vec3::new(12.0, 2.0, 3.0);

@@ -2,6 +2,7 @@ use crate::hittable::{Hittable, HittableList};
 use crate::material::*;
 use crate::objects::*;
 use crate::vec3::Vec3;
+use std::sync::Arc;
 
 use rand::Rng;
 
@@ -14,10 +15,10 @@ pub fn gen_scene_from_name(name: &str) -> Option<HittableList> {
 }
 
 pub fn random_spheres() -> HittableList {
-    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
+    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
 
     // Add the ground
-    objects.push(Box::new(Sphere {
+    objects.push(Arc::new(Sphere {
         center: Vec3::new(0.0, -1000.0, 0.0),
         radius: 1000.0,
         material: Lambertian {
@@ -39,7 +40,7 @@ pub fn random_spheres() -> HittableList {
                     // diffuse
                     let albedo = Vec3::random() * Vec3::random();
 
-                    objects.push(Box::new(Sphere {
+                    objects.push(Arc::new(Sphere {
                         center,
                         radius: 0.2,
                         material: Lambertian { albedo },
@@ -49,14 +50,14 @@ pub fn random_spheres() -> HittableList {
                     let albedo = Vec3::random_in_range(0.5, 1.0);
                     let fuzz = rand::thread_rng().gen_range(0.0, 0.5);
 
-                    objects.push(Box::new(Sphere {
+                    objects.push(Arc::new(Sphere {
                         center,
                         radius: 0.2,
                         material: Metal { albedo, fuzz },
                     }));
                 } else {
                     // glass
-                    objects.push(Box::new(Sphere {
+                    objects.push(Arc::new(Sphere {
                         center,
                         radius: 0.2,
                         material: Dielectric {
@@ -69,7 +70,7 @@ pub fn random_spheres() -> HittableList {
     }
 
     // Big glass boi
-    objects.push(Box::new(Sphere {
+    objects.push(Arc::new(Sphere {
         center: Vec3::new(0.0, 1.0, 0.0),
         radius: 1.0,
         material: Dielectric {
@@ -78,7 +79,7 @@ pub fn random_spheres() -> HittableList {
     }));
 
     // Big diffuse boi
-    objects.push(Box::new(Sphere {
+    objects.push(Arc::new(Sphere {
         center: Vec3::new(-4.0, 1.0, 0.0),
         radius: 1.0,
         material: Lambertian {
@@ -87,7 +88,7 @@ pub fn random_spheres() -> HittableList {
     }));
 
     // Big metal boi
-    objects.push(Box::new(Sphere {
+    objects.push(Arc::new(Sphere {
         center: Vec3::new(4.0, 1.0, 0.0),
         radius: 1.0,
         material: Metal {
@@ -100,10 +101,10 @@ pub fn random_spheres() -> HittableList {
 }
 
 pub fn random_bouncing_spheres() -> HittableList {
-    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
+    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
 
     // Add the ground
-    objects.push(Box::new(Sphere {
+    objects.push(Arc::new(Sphere {
         center: Vec3::new(0.0, -1000.0, 0.0),
         radius: 1000.0,
         material: Lambertian {
@@ -127,7 +128,7 @@ pub fn random_bouncing_spheres() -> HittableList {
 
                     let center1 = center + Vec3::new(0.0, rand::random::<f64>() * 0.5, 0.0);
 
-                    objects.push(Box::new(MovingSphere {
+                    objects.push(Arc::new(MovingSphere {
                         center0: center,
                         center1,
                         time0: 0.0,
@@ -140,14 +141,14 @@ pub fn random_bouncing_spheres() -> HittableList {
                     let albedo = Vec3::random_in_range(0.5, 1.0);
                     let fuzz = rand::thread_rng().gen_range(0.0, 0.5);
 
-                    objects.push(Box::new(Sphere {
+                    objects.push(Arc::new(Sphere {
                         center,
                         radius: 0.2,
                         material: Metal { albedo, fuzz },
                     }));
                 } else {
                     // glass
-                    objects.push(Box::new(Sphere {
+                    objects.push(Arc::new(Sphere {
                         center,
                         radius: 0.2,
                         material: Dielectric {
@@ -160,7 +161,7 @@ pub fn random_bouncing_spheres() -> HittableList {
     }
 
     // Big glass boi
-    objects.push(Box::new(Sphere {
+    objects.push(Arc::new(Sphere {
         center: Vec3::new(0.0, 1.0, 0.0),
         radius: 1.0,
         material: Dielectric {
@@ -169,7 +170,7 @@ pub fn random_bouncing_spheres() -> HittableList {
     }));
 
     // Big diffuse boi
-    objects.push(Box::new(Sphere {
+    objects.push(Arc::new(Sphere {
         center: Vec3::new(-4.0, 1.0, 0.0),
         radius: 1.0,
         material: Lambertian {
@@ -178,7 +179,7 @@ pub fn random_bouncing_spheres() -> HittableList {
     }));
 
     // Big metal boi
-    objects.push(Box::new(Sphere {
+    objects.push(Arc::new(Sphere {
         center: Vec3::new(4.0, 1.0, 0.0),
         radius: 1.0,
         material: Metal {

@@ -1,6 +1,7 @@
 use rand::Rng;
 use std::cmp::PartialEq;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{Index, IndexMut};
 
 /// This sets the error while comparing floats in Vec3s.
 const FLOAT_CMP_ERROR: f64 = 1e-8;
@@ -19,6 +20,12 @@ impl Vec3 {
     #[must_use]
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { v: [x, y, z] }
+    }
+
+    /// Creates a new vector with all coords to `v`
+    #[must_use]
+    pub fn splat(v: f64) -> Self {
+        Vec3 { v: [v; 3] }
     }
 
     /// Creates a new vector with all cords set to 0.
@@ -300,6 +307,19 @@ impl PartialEq for Vec3 {
     }
 }
 
+impl Index<usize> for Vec3 {
+    type Output = f64;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.v[index]
+    }
+}
+
+impl IndexMut<usize> for Vec3 {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.v[index]
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -324,6 +344,12 @@ mod tests {
     fn create() {
         let v = Vec3::new(1.0, 2.0, 3.0);
         assert_eq!(v, Vec3 { v: [1.0, 2.0, 3.0] });
+    }
+
+    #[test]
+    fn create_splat() {
+        let v = Vec3::splat(14.0);
+        assert_eq!(v, Vec3 { v: [14.0, 14.0, 14.0] });
     }
 
     #[test]
@@ -443,5 +469,18 @@ mod tests {
         assert!(v1 != v2);
         assert!(v1 != v1 + Vec3 { v: [1.0; 3] } * FLOAT_CMP_ERROR * 10.0);
         assert!(v1 == v1 + Vec3 { v: [1.0; 3] } * (FLOAT_CMP_ERROR / 10.0));
+    }
+
+    #[test]
+    fn index_operator() {
+        let mut v = Vec3 { v: [1.0, 2.0, 3.0] };
+        let v_clone = v.clone();
+        assert_eq!(v.x(), v[0]);
+        assert_eq!(v.y(), v[1]);
+        assert_eq!(v.z(), v[2]);
+        v[0] += 1.0;
+        v[1] += 1.0;
+        v[2] += 1.0;
+        assert_eq_vec3!(v, v_clone + Vec3 { v: [1.0; 3] });
     }
 }

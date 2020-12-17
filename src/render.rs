@@ -1,5 +1,5 @@
 use crate::camera::Camera;
-use crate::hittable::HittableList;
+use crate::hittable::Hittable;
 use crate::image::Image;
 use crate::vec3::Vec3;
 use crate::Config;
@@ -11,7 +11,7 @@ use std::time::{Duration, Instant};
 use pbr::ProgressBar;
 
 pub struct RenderConfig {
-    world: Arc<HittableList>,
+    world: Arc<dyn Hittable>,
     camera: Arc<Camera>,
     image_width: usize,
     image_height: usize,
@@ -24,7 +24,7 @@ pub struct RenderConfig {
 }
 
 impl RenderConfig {
-    pub fn from(config: &Config, world: Arc<HittableList>, camera: Arc<Camera>) -> Self {
+    pub fn from(config: &Config, world: Arc<dyn Hittable>, camera: Arc<Camera>) -> Self {
         Self {
             world,
             camera,
@@ -99,7 +99,7 @@ pub fn render(config: RenderConfig) -> (Image, Duration) {
                         let v =
                             (j as f64 + rand::random::<f64>()) / (config.image_height - 1) as f64;
                         let r = cam.get_ray(u, v);
-                        pixel += r.ray_color(world.clone(), config.max_depth);
+                        pixel += r.ray_color(Arc::clone(&world), config.max_depth);
                     }
                     {
                         let mut image = image.lock().unwrap();
