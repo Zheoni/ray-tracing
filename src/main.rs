@@ -8,11 +8,11 @@ mod objects;
 mod ray;
 mod render;
 mod scenes;
+mod texture;
 mod vec3;
 
 use camera::Camera;
 use render::*;
-use vec3::*;
 
 use std::fs::File;
 use std::sync::Arc;
@@ -114,32 +114,13 @@ fn main() -> Result<(), std::io::Error> {
     }
 
     // World
-    let scene =
-        scenes::gen_scene_from_name(&config.scene_name).expect("Cannot build unknown scene");
+    let (scene, camera_config) =
+        scenes::gen_scene_from_name(&config).expect("Cannot build unknown scene");
     let scene_tree = bvh::BVHNode::from_scene(scene, 0.0, 1.0);
     let world = Arc::new(scene_tree);
 
     // Camera
-    let lookfrom = Vec3::new(12.0, 2.0, 3.0);
-    let lookat = Vec3::new(0.0, 0.0, 0.0);
-    let vup = Vec3::new(0.0, 1.0, 0.0);
-    let dist_to_focus = 10.0;
-    let vfov = 20.0;
-    let aperture = 0.1;
-    let time0 = 0.0;
-    let time1 = 1.0;
-
-    let cam = Arc::new(Camera::new(
-        lookfrom,
-        lookat,
-        vup,
-        vfov,
-        config.aspect_ratio,
-        aperture,
-        dist_to_focus,
-        time0,
-        time1,
-    ));
+    let cam = Arc::new(Camera::new(&camera_config));
 
     // Render
     let (image, elapsed) = render::render(RenderConfig::from(&config, world, cam));

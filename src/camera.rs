@@ -3,6 +3,18 @@ use crate::vec3::Vec3;
 
 use rand::Rng;
 
+pub struct CameraConfig {
+    pub lookfrom: Vec3,
+    pub lookat: Vec3,
+    pub vup: Vec3,
+    pub vfov: f64,
+    pub aspect_ratio: f64,
+    pub aperture: f64,
+    pub focus_distance: f64,
+    pub time0: f64,
+    pub time1: f64,
+}
+
 pub struct Camera {
     origin: Vec3,
     lower_left_corner: Vec3,
@@ -17,32 +29,22 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(
-        lookfrom: Vec3,
-        lookat: Vec3,
-        vup: Vec3,
-        vfov: f64,
-        aspect_ratio: f64,
-        aperture: f64,
-        focus_distance: f64,
-        time0: f64,
-        time1: f64,
-    ) -> Self {
-        let theta = vfov.to_radians();
+    pub fn new(c: &CameraConfig) -> Self {
+        let theta = c.vfov.to_radians();
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h;
-        let viewport_width = aspect_ratio * viewport_height;
+        let viewport_width = c.aspect_ratio * viewport_height;
 
-        let w = (lookfrom - lookat).unit_vector();
-        let u = vup.cross(&w).unit_vector();
+        let w = (c.lookfrom - c.lookat).unit_vector();
+        let u = c.vup.cross(&w).unit_vector();
         let v = w.cross(&u);
 
-        let origin = lookfrom;
-        let horizontal = focus_distance * viewport_width * u;
-        let vertical = focus_distance * viewport_height * v;
-        let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - focus_distance * w;
+        let origin = c.lookfrom;
+        let horizontal = c.focus_distance * viewport_width * u;
+        let vertical = c.focus_distance * viewport_height * v;
+        let lower_left_corner = origin - horizontal / 2.0 - vertical / 2.0 - c.focus_distance * w;
 
-        let lens_radius = aperture / 2.0;
+        let lens_radius = c.aperture / 2.0;
         Camera {
             origin,
             horizontal,
@@ -52,8 +54,8 @@ impl Camera {
             u,
             v,
             lens_radius,
-            time0,
-            time1,
+            time0: c.time0,
+            time1: c.time1,
         }
     }
 

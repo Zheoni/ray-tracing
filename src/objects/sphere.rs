@@ -3,11 +3,24 @@ use crate::hittable::{HitRecord, Hittable};
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
+use std::sync::Arc;
 
 pub struct Sphere<M: Material> {
     pub center: Vec3,
     pub radius: f64,
-    pub material: M,
+    pub material: Arc<M>,
+}
+
+impl<M: Material> Sphere<M> {
+    pub fn get_sphere_uv(p: &Vec3) -> (f64, f64) {
+        use std::f64::consts::PI;
+        let theta = -p.y().acos();
+        let phi = -p.z().atan2(p.x()) + PI;
+
+        let u = phi / (2.0 * PI);
+        let v = theta / PI;
+        (u, v)
+    }
 }
 
 impl<M: Material> Hittable for Sphere<M> {
@@ -37,7 +50,16 @@ impl<M: Material> Hittable for Sphere<M> {
 
         let hit_point = r.at(root);
         let outward_normal = (hit_point - self.center) / self.radius;
-        let record = HitRecord::new(&r, root, hit_point, outward_normal, &self.material);
+        let (u, v) = Self::get_sphere_uv(&outward_normal);
+        let record = HitRecord::new(
+            &r,
+            root,
+            u,
+            v,
+            hit_point,
+            outward_normal,
+            self.material.as_ref(),
+        );
 
         Some(record)
     }

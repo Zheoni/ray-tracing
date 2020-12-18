@@ -349,7 +349,12 @@ mod tests {
     #[test]
     fn create_splat() {
         let v = Vec3::splat(14.0);
-        assert_eq!(v, Vec3 { v: [14.0, 14.0, 14.0] });
+        assert_eq!(
+            v,
+            Vec3 {
+                v: [14.0, 14.0, 14.0]
+            }
+        );
     }
 
     #[test]

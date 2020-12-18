@@ -55,4 +55,6 @@ args:
         possible_values:
             - spheres
             - bouncing_spheres
+            - checker_ground
+            - checker_spheres
         default_value: spheres

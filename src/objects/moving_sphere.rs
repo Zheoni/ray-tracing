@@ -48,7 +48,8 @@ impl<M: Material> Hittable for MovingSphere<M> {
 
         let hit_point = r.at(root);
         let outward_normal = (hit_point - center_now) / self.radius;
-        let record = HitRecord::new(&r, root, hit_point, outward_normal, &self.material);
+        let (u, v) = super::sphere::Sphere::<M>::get_sphere_uv(&outward_normal);
+        let record = HitRecord::new(&r, root, u, v, hit_point, outward_normal, &self.material);
 
         Some(record)
     }

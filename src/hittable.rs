@@ -13,6 +13,8 @@ pub struct HitRecord<'a> {
     pub point: Vec3,
     pub normal: Vec3,
     pub t: f64,
+    pub u: f64,
+    pub v: f64,
     pub front_face: bool,
     pub material: &'a dyn Material,
 }
@@ -24,6 +26,8 @@ impl<'a> HitRecord<'a> {
     pub fn new(
         r: &Ray,
         t: f64,
+        u: f64,
+        v: f64,
         point: Vec3,
         outward_normal: Vec3,
         material: &'a dyn Material,
@@ -40,6 +44,8 @@ impl<'a> HitRecord<'a> {
             point,
             normal,
             t,
+            u,
+            v,
             front_face,
             material,
         }
