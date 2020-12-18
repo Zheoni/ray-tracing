@@ -58,4 +58,5 @@ args:
             - checker_ground
             - checker_spheres
             - perlin_spheres
+            - earth
         default_value: spheres

@@ -2,7 +2,7 @@ mod aabb;
 mod bvh;
 mod camera;
 mod hittable;
-mod image;
+mod image_helper;
 mod material;
 mod objects;
 mod ray;
@@ -19,6 +19,16 @@ use std::sync::Arc;
 #[macro_use]
 extern crate clap;
 use clap::App;
+
+fn clamp(x: f64, min: f64, max: f64) -> f64 {
+    if x < min {
+        min
+    } else if x > max {
+        max
+    } else {
+        x
+    }
+}
 
 enum Format {
     PPM,

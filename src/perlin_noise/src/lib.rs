@@ -11,6 +11,12 @@ pub struct PerlinNoiseGenerator {
 
 pub type PNG = PerlinNoiseGenerator;
 
+impl Default for PerlinNoiseGenerator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PerlinNoiseGenerator {
     pub fn noise(&self, p: &[f64; 3]) -> f64 {
         let u = p[0] - p[0].floor();
@@ -41,7 +47,7 @@ impl PerlinNoiseGenerator {
 
     pub fn turbulence_with_depth(&self, p: &Vec3, depth: usize) -> f64 {
         let mut accum = 0.0;
-        let mut temp_p = p.clone();
+        let mut temp_p = *p;
         let mut weight = 1.0;
 
         for _ in 0..depth {
@@ -57,8 +63,8 @@ impl PerlinNoiseGenerator {
 impl PerlinNoiseGenerator {
     pub fn new() -> Self {
         let mut ranvec = [Vec3::zero(); POINT_COUNT];
-        for i in 0..ranvec.len() {
-            ranvec[i] = Vec3::random_in_range(-1.0, 1.0).unit_vector();
+        for v in ranvec.iter_mut() {
+            *v = Vec3::random_in_range(-1.0, 1.0).unit_vector();
         }
         let perm_x = Self::generate_perm();
         let perm_y = Self::generate_perm();
@@ -73,8 +79,8 @@ impl PerlinNoiseGenerator {
 
     fn generate_perm() -> [usize; POINT_COUNT] {
         let mut perm = [0; POINT_COUNT];
-        for i in 0..perm.len() {
-            perm[i] = i;
+        for (i, p) in perm.iter_mut().enumerate() {
+            *p = i;
         }
 
         Self::permute(&mut perm);
@@ -86,9 +92,7 @@ impl PerlinNoiseGenerator {
         for i in (0..perm.len()).rev() {
             use rand::Rng;
             let target = rand::thread_rng().gen_range(0, i + 1);
-            let tmp = perm[i];
-            perm[i] = perm[target];
-            perm[target] = tmp;
+            perm.swap(i, target);
         }
     }
 

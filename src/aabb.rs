@@ -54,9 +54,7 @@ impl AABB {
             let mut t1 = (self.maximum[a] - r.origin[a]) * inv_d;
 
             if inv_d < 0.0 {
-                let temp = t0;
-                t0 = t1;
-                t1 = temp;
+                std::mem::swap(&mut t0, &mut t1);
             }
 
             let t_min = t_min.max(t0);

@@ -14,8 +14,8 @@ pub struct Sphere<M: Material> {
 impl<M: Material> Sphere<M> {
     pub fn get_sphere_uv(p: &Vec3) -> (f64, f64) {
         use std::f64::consts::PI;
-        let theta = -p.y().acos();
-        let phi = -p.z().atan2(p.x()) + PI;
+        let theta = (-p.y()).acos();
+        let phi = (-p.z()).atan2(p.x()) + PI;
 
         let u = phi / (2.0 * PI);
         let v = theta / PI;

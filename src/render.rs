@@ -1,6 +1,6 @@
 use crate::camera::Camera;
 use crate::hittable::Hittable;
-use crate::image::Image;
+use crate::image_helper::Image;
 use crate::Config;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};

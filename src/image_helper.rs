@@ -1,16 +1,7 @@
+use crate::clamp;
 use std::io::{Error, Write};
 use std::ops::{Index, IndexMut};
 use vec3::Vec3;
-
-fn clamp(x: f64, min: f64, max: f64) -> f64 {
-    if x < min {
-        min
-    } else if x > max {
-        max
-    } else {
-        x
-    }
-}
 
 fn vec3_as_color_string(color: &Vec3) -> String {
     let mut r = color.x();

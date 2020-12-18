@@ -16,6 +16,7 @@ pub fn gen_scene_from_name(c: &Config) -> Option<(HittableList, CameraConfig)> {
         "checker_ground" => Some((random_spheres_checker(), default_cam(c.aspect_ratio))),
         "checker_spheres" => Some((checker_spheres(), aperture_0(c.aspect_ratio))),
         "perlin_spheres" => Some((perlin_spheres(), aperture_0(c.aspect_ratio))),
+        "earth" => Some((earth(), aperture_0(c.aspect_ratio))),
         _ => None,
     }
 }
@@ -339,4 +340,20 @@ pub fn perlin_spheres() -> HittableList {
     }));
 
     HittableList { objects }
+}
+
+pub fn earth() -> HittableList {
+    let earth_texture = Arc::new(ImageTexture::new("earthmap.jpg").unwrap());
+    let earth_surface = Arc::new(Lambertian {
+        albedo: earth_texture,
+    });
+    let globe = Arc::new(Sphere {
+        center: Vec3::zero(),
+        radius: 2.0,
+        material: earth_surface,
+    });
+
+    HittableList {
+        objects: vec![globe],
+    }
 }
