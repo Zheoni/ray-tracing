@@ -7,6 +7,9 @@ use vec3::Vec3;
 
 pub trait Material: Send + Sync {
     fn scatter(&self, r_in: &Ray, hit: &HitRecord) -> Option<(Vec3, Ray)>;
+    fn emitted(&self, _u: f64, _v: f64, _p: &Vec3) -> Vec3 {
+        Vec3::zero()
+    }
 }
 
 fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
@@ -110,5 +113,31 @@ impl Material for Dielectric {
 
         let scattered = Ray::new(hit.point, direction, r_in.time);
         Some((attenuation, scattered))
+    }
+}
+
+pub struct DiffuseLight {
+    emit: Arc<dyn Texture>,
+}
+
+impl DiffuseLight {
+    pub fn new(emit: Arc<dyn Texture>) -> Self {
+        Self { emit }
+    }
+
+    pub fn from_color(color: Vec3) -> Self {
+        Self {
+            emit: Arc::new(SolidColor::new(color)),
+        }
+    }
+}
+
+impl Material for DiffuseLight {
+    fn scatter(&self, _r_in: &Ray, _hit: &HitRecord) -> Option<(Vec3, Ray)> {
+        None
+    }
+
+    fn emitted(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
+        self.emit.value(u, v, p)
     }
 }

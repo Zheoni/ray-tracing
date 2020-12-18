@@ -34,7 +34,7 @@ impl Ray {
         self.origin + t * self.direction
     }
 
-    pub fn ray_color(&self, world: Arc<dyn Hittable>, depth: u32) -> Vec3 {
+    pub fn ray_color(&self, background: &Vec3, world: Arc<dyn Hittable>, depth: u32) -> Vec3 {
         // If maximum number of rays
         if depth == 0 {
             return Vec3::zero();
@@ -43,16 +43,22 @@ impl Ray {
         // If hit with some object. The min hit distance is not 0 because
         // of course float precission. Not every ray will match exactly with 0.0
         if let Some(hit) = world.hit(self, 0.001, f64::INFINITY) {
-            if let Some((attenuation, scattered)) = hit.material.scatter(self, &hit) {
-                return attenuation * scattered.ray_color(world, depth - 1);
-            }
-            return Vec3::zero();
-        }
+            // if hits something
 
-        // Background
-        let unit_direction = self.direction.unit_vector();
-        let t = (unit_direction.y() + 1.0) * 0.5;
-        (1.0 - t) * Vec3::one() + t * Vec3::new(0.5, 0.7, 1.0)
+            // Calculate the light emitted
+            let emitted = hit.material.emitted(hit.u, hit.v, &hit.point);
+
+            if let Some((attenuation, scattered)) = hit.material.scatter(self, &hit) {
+                // if material scatters
+                emitted + attenuation * scattered.ray_color(background, world, depth - 1)
+            } else {
+                // if it not, only emits
+                emitted
+            }
+        } else {
+            // if hits nothing, the background is visible
+            *background
+        }
     }
 }
 

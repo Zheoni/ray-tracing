@@ -1,5 +1,5 @@
 use crate::aabb::{surrounding_box, AABB};
-use crate::hittable::{HitRecord, Hittable, HittableList};
+use crate::hittable::{HitRecord, Hittable, HittableList, Unhittable};
 use crate::ray::Ray;
 use std::borrow::Borrow;
 use std::cmp::Ordering;
@@ -18,11 +18,14 @@ impl BVHNode {
         let axis: usize = rand::thread_rng().gen_range(0, 3);
         assert!(axis < 3);
 
-        let left;
-        let right;
-        let b_box;
+        let left: Arc<dyn Hittable>;
+        let right: Arc<dyn Hittable>;
 
         match objects.len() {
+            0 => {
+                left = Arc::new(Unhittable {});
+                right = Arc::clone(&left);
+            }
             1 => {
                 left = Arc::clone(&objects[0]);
                 right = Arc::clone(&objects[0]);
@@ -47,11 +50,11 @@ impl BVHNode {
         let box_left = left.bounding_box(time0, time1);
         let box_right = right.bounding_box(time0, time1);
 
-        if box_left.is_none() || box_right.is_none() {
-            eprintln!("No bounding box in bvh_node constructior.");
-        }
-
-        b_box = surrounding_box(&box_left.unwrap(), &box_right.unwrap());
+        let b_box = if box_left.is_none() || box_right.is_none() {
+            AABB::default()
+        } else {
+            surrounding_box(&box_left.unwrap(), &box_right.unwrap())
+        };
 
         Self { left, right, b_box }
     }

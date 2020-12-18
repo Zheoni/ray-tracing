@@ -7,6 +7,15 @@ pub struct AABB {
     pub maximum: Vec3,
 }
 
+impl Default for AABB {
+    fn default() -> Self {
+        Self {
+            minimum: Vec3::zero(),
+            maximum: Vec3::zero(),
+        }
+    }
+}
+
 impl AABB {
     // //default
     // pub fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> bool {

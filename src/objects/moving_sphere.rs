@@ -1,26 +1,23 @@
-use crate::aabb::{surrounding_box, AABB};
-use crate::hittable::{HitRecord, Hittable};
-use crate::material::Material;
-use crate::ray::Ray;
-use vec3::Vec3;
+use super::*;
+use crate::aabb::surrounding_box;
 
-pub struct MovingSphere<M: Material> {
+pub struct MovingSphere {
     pub center0: Vec3,
     pub center1: Vec3,
     pub time0: f64,
     pub time1: f64,
     pub radius: f64,
-    pub material: M,
+    pub material: Arc<dyn Material>,
 }
 
-impl<M: Material> MovingSphere<M> {
+impl MovingSphere {
     pub fn center(&self, time: f64) -> Vec3 {
         self.center0
             + ((time - self.time0) / (self.time1 - self.time0)) * (self.center1 - self.center0)
     }
 }
 
-impl<M: Material> Hittable for MovingSphere<M> {
+impl Hittable for MovingSphere {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let center_now = self.center(r.time);
         let oc = r.origin - center_now;
@@ -48,8 +45,16 @@ impl<M: Material> Hittable for MovingSphere<M> {
 
         let hit_point = r.at(root);
         let outward_normal = (hit_point - center_now) / self.radius;
-        let (u, v) = super::sphere::Sphere::<M>::get_sphere_uv(&outward_normal);
-        let record = HitRecord::new(&r, root, u, v, hit_point, outward_normal, &self.material);
+        let (u, v) = super::sphere::Sphere::get_sphere_uv(&outward_normal);
+        let record = HitRecord::new(
+            &r,
+            root,
+            u,
+            v,
+            hit_point,
+            outward_normal,
+            self.material.as_ref(),
+        );
 
         Some(record)
     }

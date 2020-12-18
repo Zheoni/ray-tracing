@@ -9,14 +9,64 @@ use vec3::Vec3;
 
 use rand::Rng;
 
-pub fn gen_scene_from_name(c: &Config) -> Option<(HittableList, CameraConfig)> {
+pub struct Scene {
+    pub world: HittableList,
+    pub camera_config: CameraConfig,
+    pub background_color: Vec3,
+}
+
+pub fn gen_scene_from_name(c: &Config) -> Option<Scene> {
+    let def_cam = default_cam(c.aspect_ratio);
+    let def_background = Vec3::new(0.7, 0.8, 1.0);
+
     match c.scene_name.as_str() {
-        "spheres" => Some((random_spheres(), default_cam(c.aspect_ratio))),
-        "bouncing_spheres" => Some((random_bouncing_spheres(), default_cam(c.aspect_ratio))),
-        "checker_ground" => Some((random_spheres_checker(), default_cam(c.aspect_ratio))),
-        "checker_spheres" => Some((checker_spheres(), aperture_0(c.aspect_ratio))),
-        "perlin_spheres" => Some((perlin_spheres(), aperture_0(c.aspect_ratio))),
-        "earth" => Some((earth(), aperture_0(c.aspect_ratio))),
+        "spheres" => Some(Scene {
+            world: random_spheres(),
+            camera_config: def_cam,
+            background_color: def_background,
+        }),
+        "bouncing_spheres" => Some(Scene {
+            world: random_bouncing_spheres(),
+            camera_config: def_cam,
+            background_color: def_background,
+        }),
+        "checker_ground" => Some(Scene {
+            world: random_spheres_checker(),
+            camera_config: def_cam,
+            background_color: def_background,
+        }),
+        "checker_spheres" => Some(Scene {
+            world: checker_spheres(),
+            camera_config: aperture_0(&def_cam),
+            background_color: def_background,
+        }),
+        "perlin_spheres" => Some(Scene {
+            world: perlin_spheres(),
+            camera_config: aperture_0(&def_cam),
+            background_color: def_background,
+        }),
+        "earth" => Some(Scene {
+            world: earth(),
+            camera_config: aperture_0(&def_cam),
+            background_color: def_background,
+        }),
+        "black" => Some(Scene {
+            world: HittableList {
+                objects: Vec::new(),
+            },
+            camera_config: def_cam,
+            background_color: Vec3::zero(),
+        }),
+        "simple_light" => Some(Scene {
+            world: simple_light(),
+            camera_config: simple_light_camera(&def_cam),
+            background_color: Vec3::zero(),
+        }),
+        "cornell_box" => Some(Scene {
+            world: cornell_box(),
+            camera_config: cornell_box_camera(&def_cam),
+            background_color: Vec3::zero(),
+        }),
         _ => None,
     }
 }
@@ -45,7 +95,7 @@ pub fn random_spheres() -> HittableList {
         material: Arc::new(Lambertian::from_color(Vec3::new(0.5, 0.5, 0.5))),
     }));
 
-    let glass = Arc::new(Dielectric {
+    let glass: Arc<dyn Material> = Arc::new(Dielectric {
         index_refraction: 1.5,
     });
 
@@ -149,7 +199,7 @@ pub fn random_bouncing_spheres() -> HittableList {
                         time0: 0.0,
                         time1: 1.0,
                         radius: 0.2,
-                        material: Lambertian::from_color(color),
+                        material: Arc::new(Lambertian::from_color(color)),
                     }));
                 } else if choose_mat < 0.95 {
                     // metal
@@ -289,11 +339,10 @@ pub fn random_spheres_checker() -> HittableList {
     HittableList { objects }
 }
 
-pub fn aperture_0(aspect_ratio: f64) -> CameraConfig {
-    let default = default_cam(aspect_ratio);
+pub fn aperture_0(default: &CameraConfig) -> CameraConfig {
     CameraConfig {
         aperture: 0.0,
-        ..default
+        ..*default
     }
 }
 
@@ -304,7 +353,7 @@ pub fn checker_spheres() -> HittableList {
         Vec3::new(0.2, 0.3, 0.1),
         Vec3::new(0.9, 0.9, 0.9),
     ));
-    let material = Arc::new(Lambertian {
+    let material: Arc<dyn Material> = Arc::new(Lambertian {
         albedo: Arc::clone(&checker),
     });
     objects.push(Arc::new(Sphere {
@@ -325,7 +374,7 @@ pub fn perlin_spheres() -> HittableList {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
 
     let texture = Arc::new(NoiseTexture::new(4.0));
-    let material = Arc::new(Lambertian { albedo: texture });
+    let material: Arc<dyn Material> = Arc::new(Lambertian { albedo: texture });
 
     objects.push(Arc::new(Sphere {
         center: Vec3::new(0.0, -1000.0, 0.0),
@@ -355,5 +404,121 @@ pub fn earth() -> HittableList {
 
     HittableList {
         objects: vec![globe],
+    }
+}
+
+pub fn simple_light_camera(default: &CameraConfig) -> CameraConfig {
+    CameraConfig {
+        lookfrom: Vec3::new(26.0, 3.0, 6.0),
+        lookat: Vec3::new(0.0, 2.0, 0.0),
+        ..*default
+    }
+}
+
+pub fn simple_light() -> HittableList {
+    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+
+    let marble: Arc<dyn Material> = Arc::new(Lambertian {
+        albedo: Arc::new(NoiseTexture::new(4.0)),
+    });
+
+    objects.push(Arc::new(Sphere {
+        center: Vec3::new(0.0, -1000.0, 0.0),
+        radius: 1000.0,
+        material: Arc::clone(&marble),
+    }));
+    objects.push(Arc::new(Sphere {
+        center: Vec3::new(0.0, 2.0, 0.0),
+        radius: 2.0,
+        material: Arc::clone(&marble),
+    }));
+
+    let difflight: Arc<dyn Material> = Arc::new(DiffuseLight::from_color(Vec3::splat(4.0)));
+    objects.push(Arc::new(Rect::new(
+        RectAxis::XY,
+        3.0,
+        5.0,
+        1.0,
+        3.0,
+        -2.0,
+        Arc::clone(&difflight),
+    )));
+
+    HittableList { objects }
+}
+
+pub fn cornell_box() -> HittableList {
+    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+
+    let red: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::new(0.65, 0.05, 0.05)));
+    let white: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::splat(0.73)));
+    let green: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::new(0.12, 0.45, 0.15)));
+    let light: Arc<dyn Material> = Arc::new(DiffuseLight::from_color(Vec3::splat(15.0)));
+
+    objects.push(Arc::new(Rect::new(
+        RectAxis::YZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        green,
+    )));
+    objects.push(Arc::new(Rect::new(
+        RectAxis::YZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        red,
+    )));
+    objects.push(Arc::new(Rect::new(
+        RectAxis::XZ,
+        213.0,
+        343.0,
+        227.0,
+        332.0,
+        554.0,
+        light,
+    )));
+    objects.push(Arc::new(Rect::new(
+        RectAxis::XZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        Arc::clone(&white),
+    )));
+    objects.push(Arc::new(Rect::new(
+        RectAxis::XZ,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&white),
+    )));
+    objects.push(Arc::new(Rect::new(
+        RectAxis::XY,
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        555.0,
+        Arc::clone(&white),
+    )));
+
+    HittableList { objects }
+}
+
+fn cornell_box_camera(default: &CameraConfig) -> CameraConfig {
+    CameraConfig {
+        lookfrom: Vec3::new(278.0, 278.0, -800.0),
+        lookat: Vec3::new(278.0, 270.0, 0.0),
+        vfov: 40.0,
+        aperture: 0.0,
+        ..*default
     }
 }

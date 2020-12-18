@@ -11,7 +11,6 @@ default = []
 pixar1 = []
 pixar2 = []
 
-
 [dependencies]
 rand = "0.7.3"
 num_cpus = "1.13.0"
@@ -20,3 +19,6 @@ pbr = "1.0.3"
 image = "0.23.12"
 vec3 = { path = "src/vec3" }
 perlin_noise = { path = "src/perlin_noise" }
+
+[workspace]
+members = ["src/vec3/", "src/perlin_noise/"]

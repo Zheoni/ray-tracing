@@ -13,6 +13,7 @@ use pbr::ProgressBar;
 pub struct RenderConfig {
     world: Arc<dyn Hittable>,
     camera: Arc<Camera>,
+    background_color: Vec3,
     image_width: usize,
     image_height: usize,
     aspect_ratio: f64,
@@ -24,10 +25,16 @@ pub struct RenderConfig {
 }
 
 impl RenderConfig {
-    pub fn from(config: &Config, world: Arc<dyn Hittable>, camera: Arc<Camera>) -> Self {
+    pub fn from(
+        config: &Config,
+        background_color: Vec3,
+        world: Arc<dyn Hittable>,
+        camera: Arc<Camera>,
+    ) -> Self {
         Self {
             world,
             camera,
+            background_color,
             image_width: (config.image_height as f64 * config.aspect_ratio).floor() as usize,
             image_height: config.image_height,
             aspect_ratio: config.aspect_ratio,
@@ -99,7 +106,11 @@ pub fn render(config: RenderConfig) -> (Image, Duration) {
                         let v =
                             (j as f64 + rand::random::<f64>()) / (config.image_height - 1) as f64;
                         let r = cam.get_ray(u, v);
-                        pixel += r.ray_color(Arc::clone(&world), config.max_depth);
+                        pixel += r.ray_color(
+                            &config.background_color,
+                            Arc::clone(&world),
+                            config.max_depth,
+                        );
                     }
                     {
                         let mut image = image.lock().unwrap();

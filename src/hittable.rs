@@ -9,6 +9,16 @@ pub trait Hittable: Send + Sync {
     fn bounding_box(&self, time0: f64, time1: f64) -> Option<AABB>;
 }
 
+pub struct Unhittable {}
+impl Hittable for Unhittable {
+    fn hit(&self, _r: &Ray, _t_min: f64, _t_max: f64) -> Option<HitRecord> {
+        None
+    }
+    fn bounding_box(&self, _time0: f64, _time1: f64) -> Option<AABB> {
+        None
+    }
+}
+
 pub struct HitRecord<'a> {
     pub point: Vec3,
     pub normal: Vec3,

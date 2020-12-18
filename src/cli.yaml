@@ -59,4 +59,7 @@ args:
             - checker_spheres
             - perlin_spheres
             - earth
+            - black
+            - simple_light
+            - cornell_box
         default_value: spheres

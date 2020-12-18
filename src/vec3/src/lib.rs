@@ -1,5 +1,6 @@
 use rand::Rng;
 use std::cmp::PartialEq;
+use std::convert::From;
 use std::ops::Deref;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::ops::{Index, IndexMut};
@@ -326,6 +327,12 @@ impl Deref for Vec3 {
 
     fn deref(&self) -> &Self::Target {
         &self.v
+    }
+}
+
+impl From<[f64; 3]> for Vec3 {
+    fn from(v: [f64; 3]) -> Self {
+        Self { v }
     }
 }
 

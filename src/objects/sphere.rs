@@ -1,17 +1,12 @@
-use crate::aabb::AABB;
-use crate::hittable::{HitRecord, Hittable};
-use crate::material::Material;
-use crate::ray::Ray;
-use std::sync::Arc;
-use vec3::Vec3;
+use super::*;
 
-pub struct Sphere<M: Material> {
+pub struct Sphere {
     pub center: Vec3,
     pub radius: f64,
-    pub material: Arc<M>,
+    pub material: Arc<dyn Material>,
 }
 
-impl<M: Material> Sphere<M> {
+impl Sphere {
     pub fn get_sphere_uv(p: &Vec3) -> (f64, f64) {
         use std::f64::consts::PI;
         let theta = (-p.y()).acos();
@@ -23,7 +18,7 @@ impl<M: Material> Sphere<M> {
     }
 }
 
-impl<M: Material> Hittable for Sphere<M> {
+impl Hittable for Sphere {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = r.origin - self.center;
         let a = r.direction.length_squared();

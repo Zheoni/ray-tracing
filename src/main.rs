@@ -123,16 +123,20 @@ fn main() -> Result<(), std::io::Error> {
     }
 
     // World
-    let (scene, camera_config) =
-        scenes::gen_scene_from_name(&config).expect("Cannot build unknown scene");
-    let scene_tree = bvh::BVHNode::from_scene(scene, 0.0, 1.0);
+    let scene = scenes::gen_scene_from_name(&config).expect("Cannot build unknown scene");
+    let scene_tree = bvh::BVHNode::from_scene(scene.world, 0.0, 1.0);
     let world = Arc::new(scene_tree);
 
     // Camera
-    let cam = Arc::new(Camera::new(&camera_config));
+    let cam = Arc::new(Camera::new(&scene.camera_config));
 
     // Render
-    let (image, elapsed) = render::render(RenderConfig::from(&config, world, cam));
+    let (image, elapsed) = render::render(RenderConfig::from(
+        &config,
+        scene.background_color,
+        world,
+        cam,
+    ));
 
     let (render_time, tag) = {
         let mut render_time = elapsed.as_secs_f64();
