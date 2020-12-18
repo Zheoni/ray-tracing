@@ -1,12 +1,12 @@
 use crate::camera::Camera;
 use crate::hittable::Hittable;
 use crate::image::Image;
-use crate::vec3::Vec3;
 use crate::Config;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
+use vec3::Vec3;
 
 use pbr::ProgressBar;
 

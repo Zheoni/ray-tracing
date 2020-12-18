@@ -1,9 +1,9 @@
 use crate::hittable::HitRecord;
 use crate::ray::Ray;
 use crate::texture::{SolidColor, Texture};
-use crate::vec3::Vec3;
 use std::ops::Neg;
 use std::sync::Arc;
+use vec3::Vec3;
 
 pub trait Material: Send + Sync {
     fn scatter(&self, r_in: &Ray, hit: &HitRecord) -> Option<(Vec3, Ray)>;

@@ -1,5 +1,6 @@
-use crate::vec3::Vec3;
+use perlin_noise::PNG;
 use std::sync::Arc;
+use vec3::Vec3;
 
 pub trait Texture: Sync + Send {
     fn value(&self, u: f64, v: f64, p: &Vec3) -> Vec3;
@@ -55,5 +56,25 @@ impl Texture for CheckerTexture {
         } else {
             self.even.value(u, v, p)
         }
+    }
+}
+
+pub struct NoiseTexture {
+    noise: PNG,
+    scale: f64,
+}
+
+impl NoiseTexture {
+    pub fn new(scale: f64) -> Self {
+        Self {
+            noise: PNG::new(),
+            scale,
+        }
+    }
+}
+
+impl Texture for NoiseTexture {
+    fn value(&self, _u: f64, _v: f64, p: &Vec3) -> Vec3 {
+        Vec3::one() * 0.5 * (1.0 + (self.scale * p.z() + 10.0 * self.noise.turbulence(p)).sin())
     }
 }

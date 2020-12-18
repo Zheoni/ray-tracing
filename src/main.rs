@@ -9,7 +9,6 @@ mod ray;
 mod render;
 mod scenes;
 mod texture;
-mod vec3;
 
 use camera::Camera;
 use render::*;

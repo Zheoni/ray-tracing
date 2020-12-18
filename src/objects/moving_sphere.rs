@@ -2,7 +2,7 @@ use crate::aabb::{surrounding_box, AABB};
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::vec3::Vec3;
+use vec3::Vec3;
 
 pub struct MovingSphere<M: Material> {
     pub center0: Vec3,

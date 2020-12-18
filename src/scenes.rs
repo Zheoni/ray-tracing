@@ -3,9 +3,9 @@ use crate::hittable::{Hittable, HittableList};
 use crate::material::*;
 use crate::objects::*;
 use crate::texture::*;
-use crate::vec3::Vec3;
 use crate::Config;
 use std::sync::Arc;
+use vec3::Vec3;
 
 use rand::Rng;
 
@@ -14,7 +14,8 @@ pub fn gen_scene_from_name(c: &Config) -> Option<(HittableList, CameraConfig)> {
         "spheres" => Some((random_spheres(), default_cam(c.aspect_ratio))),
         "bouncing_spheres" => Some((random_bouncing_spheres(), default_cam(c.aspect_ratio))),
         "checker_ground" => Some((random_spheres_checker(), default_cam(c.aspect_ratio))),
-        "checker_spheres" => Some((checker_spheres(), checker_spheres_cam(c.aspect_ratio))),
+        "checker_spheres" => Some((checker_spheres(), aperture_0(c.aspect_ratio))),
+        "perlin_spheres" => Some((perlin_spheres(), aperture_0(c.aspect_ratio))),
         _ => None,
     }
 }
@@ -287,7 +288,7 @@ pub fn random_spheres_checker() -> HittableList {
     HittableList { objects }
 }
 
-pub fn checker_spheres_cam(aspect_ratio: f64) -> CameraConfig {
+pub fn aperture_0(aspect_ratio: f64) -> CameraConfig {
     let default = default_cam(aspect_ratio);
     CameraConfig {
         aperture: 0.0,
@@ -313,6 +314,27 @@ pub fn checker_spheres() -> HittableList {
     objects.push(Arc::new(Sphere {
         center: Vec3::new(0.0, 10.0, 0.0),
         radius: 10.0,
+        material: Arc::clone(&material),
+    }));
+
+    HittableList { objects }
+}
+
+pub fn perlin_spheres() -> HittableList {
+    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+
+    let texture = Arc::new(NoiseTexture::new(4.0));
+    let material = Arc::new(Lambertian { albedo: texture });
+
+    objects.push(Arc::new(Sphere {
+        center: Vec3::new(0.0, -1000.0, 0.0),
+        radius: 1000.0,
+        material: Arc::clone(&material),
+    }));
+
+    objects.push(Arc::new(Sphere {
+        center: Vec3::new(0.0, 2.0, 0.0),
+        radius: 2.0,
         material: Arc::clone(&material),
     }));
 

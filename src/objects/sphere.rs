@@ -2,8 +2,8 @@ use crate::aabb::AABB;
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::Material;
 use crate::ray::Ray;
-use crate::vec3::Vec3;
 use std::sync::Arc;
+use vec3::Vec3;
 
 pub struct Sphere<M: Material> {
     pub center: Vec3,

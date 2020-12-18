@@ -1,5 +1,6 @@
 use rand::Rng;
 use std::cmp::PartialEq;
+use std::ops::Deref;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::ops::{Index, IndexMut};
 
@@ -317,6 +318,14 @@ impl Index<usize> for Vec3 {
 impl IndexMut<usize> for Vec3 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.v[index]
+    }
+}
+
+impl Deref for Vec3 {
+    type Target = [f64; 3];
+
+    fn deref(&self) -> &Self::Target {
+        &self.v
     }
 }
 

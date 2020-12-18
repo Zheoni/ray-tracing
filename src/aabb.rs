@@ -1,5 +1,5 @@
 use crate::ray::Ray;
-use crate::vec3::Vec3;
+use vec3::Vec3;
 
 #[derive(Clone)]
 pub struct AABB {

@@ -1,5 +1,5 @@
 use crate::hittable::Hittable;
-use crate::vec3::Vec3;
+use vec3::Vec3;
 
 use std::sync::Arc;
 

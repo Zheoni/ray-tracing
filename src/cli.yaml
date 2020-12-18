@@ -57,4 +57,5 @@ args:
             - bouncing_spheres
             - checker_ground
             - checker_spheres
+            - perlin_spheres
         default_value: spheres
