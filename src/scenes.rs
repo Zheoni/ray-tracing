@@ -1,5 +1,5 @@
 use crate::camera::CameraConfig;
-use crate::hittable::{Hittable, HittableList};
+use crate::hittable::{Hittable, HittableList, RotateY, Translate};
 use crate::material::*;
 use crate::objects::*;
 use crate::texture::*;
@@ -455,6 +455,7 @@ pub fn cornell_box() -> HittableList {
     let green: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::new(0.12, 0.45, 0.15)));
     let light: Arc<dyn Material> = Arc::new(DiffuseLight::from_color(Vec3::splat(15.0)));
 
+    // Sides
     objects.push(Arc::new(Rect::new(
         RectAxis::YZ,
         0.0,
@@ -509,6 +510,25 @@ pub fn cornell_box() -> HittableList {
         555.0,
         Arc::clone(&white),
     )));
+
+    // Blocks
+    let box1 = Arc::new(Block::new(
+        Vec3::zero(),
+        Vec3::new(165.0, 330.0, 165.0),
+        Arc::clone(&white),
+    ));
+    let box1 = Arc::new(RotateY::new(box1, 15.0));
+    let box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
+    objects.push(box1);
+
+    let box2 = Arc::new(Block::new(
+        Vec3::zero(),
+        Vec3::new(165.0, 165.0, 165.0),
+        Arc::clone(&white),
+    ));
+    let box2 = Arc::new(RotateY::new(box2, -18.0));
+    let box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+    objects.push(box2);
 
     HittableList { objects }
 }

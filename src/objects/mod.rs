@@ -1,5 +1,5 @@
 use crate::aabb::AABB;
-use crate::hittable::{HitRecord, Hittable};
+use crate::hittable::{HitRecord, Hittable, HittableList};
 use crate::material::Material;
 use crate::ray::Ray;
 use std::sync::Arc;
@@ -11,3 +11,5 @@ mod moving_sphere;
 pub use moving_sphere::*;
 mod aarect;
 pub use aarect::*;
+mod block;
+pub use block::*;
