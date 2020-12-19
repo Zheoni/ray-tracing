@@ -1,4 +1,5 @@
 use crate::camera::CameraConfig;
+use crate::constant_medium::ConstantMedium;
 use crate::hittable::{Hittable, HittableList, RotateY, Translate};
 use crate::material::*;
 use crate::objects::*;
@@ -65,6 +66,16 @@ pub fn gen_scene_from_name(c: &Config) -> Option<Scene> {
         "cornell_box" => Some(Scene {
             world: cornell_box(),
             camera_config: cornell_box_camera(&def_cam),
+            background_color: Vec3::zero(),
+        }),
+        "cornell_smoke" => Some(Scene {
+            world: cornell_smoke(),
+            camera_config: cornell_box_camera(&def_cam),
+            background_color: Vec3::zero(),
+        }),
+        "final_scene" => Some(Scene {
+            world: final_scene(),
+            camera_config: final_scene_camera(&def_cam),
             background_color: Vec3::zero(),
         }),
         _ => None,
@@ -538,6 +549,164 @@ fn cornell_box_camera(default: &CameraConfig) -> CameraConfig {
         lookfrom: Vec3::new(278.0, 278.0, -800.0),
         lookat: Vec3::new(278.0, 270.0, 0.0),
         vfov: 40.0,
+        aperture: 0.0,
+        ..*default
+    }
+}
+
+pub fn cornell_smoke() -> HittableList {
+    let mut cb = cornell_box();
+    let box1 = cb.objects.pop().unwrap();
+    let box2 = cb.objects.pop().unwrap();
+
+    cb.objects.push(Arc::new(ConstantMedium::from_color(
+        box1,
+        0.01,
+        Vec3::zero(),
+    )));
+    cb.objects.push(Arc::new(ConstantMedium::from_color(
+        box2,
+        0.01,
+        Vec3::one(),
+    )));
+
+    cb
+}
+
+pub fn final_scene() -> HittableList {
+    use crate::bvh::BVHNode;
+    let mut rng = rand::thread_rng();
+    let mut boxes: Vec<Arc<dyn Hittable>> = Vec::new();
+
+    let ground: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::new(0.48, 0.83, 0.53)));
+
+    let boxes_per_side = 20;
+    for i in 0..boxes_per_side {
+        for j in 0..boxes_per_side {
+            let w = 100.0;
+            let x0 = -1000.0 + i as f64 * w;
+            let z0 = -1000.0 + j as f64 * w;
+            let y0 = 0.0;
+            let x1 = x0 + w;
+            let y1 = rng.gen_range(1.0, 101.0);
+            let z1 = z0 + w;
+
+            boxes.push(Arc::new(Block::new(
+                Vec3::new(x0, y0, z0),
+                Vec3::new(x1, y1, z1),
+                Arc::clone(&ground),
+            )));
+        }
+    }
+
+    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+
+    objects.push(Arc::new(BVHNode::build_tree(&mut boxes, 0.0, 1.0)));
+
+    let light: Arc<dyn Material> = Arc::new(DiffuseLight::from_color(Vec3::splat(7.0)));
+    objects.push(Arc::new(Rect::new(
+        RectAxis::XZ,
+        123.0,
+        423.0,
+        147.0,
+        412.0,
+        445.0,
+        Arc::clone(&light),
+    )));
+
+    let center0 = Vec3::new(400.0, 400.0, 200.0);
+    let center1 = center0 + Vec3::new(30.0, 0.0, 0.0);
+    let moving_sphere_material = Arc::new(Lambertian::from_color(Vec3::new(0.7, 0.3, 0.1)));
+    objects.push(Arc::new(MovingSphere {
+        center0,
+        center1,
+        time0: 0.0,
+        time1: 1.0,
+        radius: 50.0,
+        material: moving_sphere_material,
+    }));
+
+    let glass: Arc<dyn Material> = Arc::new(Dielectric {
+        index_refraction: 0.5,
+    });
+    objects.push(Arc::new(Sphere {
+        center: Vec3::new(260.0, 150.0, 45.0),
+        radius: 50.0,
+        material: Arc::clone(&glass),
+    }));
+    objects.push(Arc::new(Sphere {
+        center: Vec3::new(0.0, 150.0, 145.0),
+        radius: 50.0,
+        material: Arc::new(Metal {
+            albedo: Vec3::new(0.8, 0.8, 0.9),
+            fuzz: 1.0,
+        }),
+    }));
+
+    let boundary: Arc<dyn Hittable> = Arc::new(Sphere {
+        center: Vec3::new(360.0, 150.0, 145.0),
+        radius: 70.0,
+        material: Arc::clone(&glass),
+    });
+    objects.push(Arc::clone(&boundary));
+    objects.push(Arc::new(ConstantMedium::from_color(
+        Arc::clone(&boundary),
+        0.2,
+        Vec3::new(0.2, 0.4, 0.9),
+    )));
+    let boundary: Arc<dyn Hittable> = Arc::new(Sphere {
+        center: Vec3::zero(),
+        radius: 5000.0,
+        material: Arc::clone(&glass),
+    });
+    objects.push(Arc::new(ConstantMedium::from_color(
+        Arc::clone(&boundary),
+        0.0001,
+        Vec3::one(),
+    )));
+
+    objects.push(Arc::new(Sphere {
+        center: Vec3::new(400.0, 200.0, 400.0),
+        radius: 100.0,
+        material: Arc::new(Lambertian {
+            albedo: Arc::new(ImageTexture::new("earthmap.jpg").unwrap()),
+        }),
+    }));
+    objects.push(Arc::new(Sphere {
+        center: Vec3::new(220.0, 280.0, 300.0),
+        radius: 80.0,
+        material: Arc::new(Lambertian {
+            albedo: Arc::new(NoiseTexture::new(0.1)),
+        }),
+    }));
+
+    let mut boxes: Vec<Arc<dyn Hittable>> = Vec::new();
+    let white: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::splat(0.73)));
+    let ns = 1000;
+    for _ in 0..ns {
+        boxes.push(Arc::new(Sphere {
+            center: Vec3::random_in_range(0.0, 165.0),
+            radius: 10.0,
+            material: Arc::clone(&white),
+        }))
+    }
+
+    objects.push(Arc::new(Translate::new(
+        Arc::new(RotateY::new(
+            Arc::new(BVHNode::build_tree(&mut boxes, 0.0, 1.0)),
+            15.0,
+        )),
+        Vec3::new(-100.0, 270.0, 395.0),
+    )));
+
+    HittableList { objects }
+}
+
+pub fn final_scene_camera(default: &CameraConfig) -> CameraConfig {
+    CameraConfig {
+        vfov: 40.0,
+        lookfrom: Vec3::new(478.0, 278.0, -600.0),
+        lookat: Vec3::new(278.0, 278.0, 0.0),
         aperture: 0.0,
         ..*default
     }

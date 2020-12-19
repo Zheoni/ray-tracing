@@ -1,6 +1,7 @@
 mod aabb;
 mod bvh;
 mod camera;
+mod constant_medium;
 mod hittable;
 mod image_helper;
 mod material;
@@ -11,6 +12,7 @@ mod scenes;
 mod texture;
 
 use camera::Camera;
+use hittable::Hittable;
 use render::*;
 
 use std::fs::File;
@@ -49,6 +51,7 @@ pub struct Config {
     print_debug: bool,
     output: Output,
     scene_name: String,
+    avoid_bvh: bool,
 }
 
 fn get_config() -> Config {
@@ -101,6 +104,8 @@ fn get_config() -> Config {
 
     let scene_name = args.value_of("scene").unwrap_or("spheres").to_string();
 
+    let avoid_bvh = args.is_present("avoid_bvh");
+
     Config {
         image_height,
         aspect_ratio,
@@ -111,6 +116,7 @@ fn get_config() -> Config {
         print_debug,
         output,
         scene_name,
+        avoid_bvh,
     }
 }
 
@@ -124,8 +130,11 @@ fn main() -> Result<(), std::io::Error> {
 
     // World
     let scene = scenes::gen_scene_from_name(&config).expect("Cannot build unknown scene");
-    let scene_tree = bvh::BVHNode::from_scene(scene.world, 0.0, 1.0);
-    let world = Arc::new(scene_tree);
+    let world: Arc<dyn Hittable> = if config.avoid_bvh {
+        Arc::new(scene.world)
+    } else {
+        Arc::new(bvh::BVHNode::from_scene(scene.world, 0.0, 1.0))
+    };
 
     // Camera
     let cam = Arc::new(Camera::new(&scene.camera_config));

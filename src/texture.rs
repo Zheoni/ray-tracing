@@ -88,9 +88,6 @@ pub struct ImageTexture {
 impl ImageTexture {
     pub fn new(filename: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let img = ImageReader::open(filename)?.decode()?.into_rgb8();
-
-        println!("{} {}", img.width(), img.height());
-
         Ok(Self { img })
     }
 }

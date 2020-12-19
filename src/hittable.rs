@@ -146,15 +146,13 @@ pub struct RotateY {
 
 impl RotateY {
     pub fn new(object: Arc<dyn Hittable>, angle: f64) -> Self {
-        use std::f64::INFINITY;
-
         let angle = angle.to_radians();
         let sin_theta = angle.sin();
         let cos_theta = angle.cos();
 
         let bbox = if let Some(bb) = object.bounding_box(0.0, 1.0) {
-            let mut min = Vec3::splat(INFINITY);
-            let mut max = Vec3::splat(-INFINITY);
+            let mut min = Vec3::splat(f64::INFINITY);
+            let mut max = Vec3::splat(f64::NEG_INFINITY);
 
             for i in 0..2 {
                 for j in 0..2 {

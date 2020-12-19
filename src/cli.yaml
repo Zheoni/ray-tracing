@@ -49,6 +49,9 @@ args:
     - debug:
         short: d
         help: Prints configuration of the render.
+    - avoid_bvh:
+        long: avoid_bvh
+        help: Avoid to build a BVH with all the objects. May be faster to render a simple scene.
     - scene:
         takes_value: true
         required: false
@@ -62,4 +65,6 @@ args:
             - black
             - simple_light
             - cornell_box
+            - cornell_smoke
+            - final_scene
         default_value: spheres
