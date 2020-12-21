@@ -13,6 +13,7 @@ pub struct ConstantMedium {
 }
 
 impl ConstantMedium {
+    #[allow(unused)]
     pub fn new(boundary: Arc<dyn Hittable>, d: f64, a: Arc<dyn Texture>) -> Self {
         Self {
             boundary,

@@ -4,7 +4,6 @@ use crate::hittable::{Hittable, HittableList, RotateY, Translate};
 use crate::material::*;
 use crate::objects::*;
 use crate::texture::*;
-use crate::Config;
 use std::sync::Arc;
 use vec3::Vec3;
 
@@ -16,73 +15,39 @@ pub struct Scene {
     pub background_color: Vec3,
 }
 
-pub fn gen_scene_from_name(c: &Config) -> Option<Scene> {
-    let def_cam = default_cam(c.aspect_ratio);
-    let def_background = Vec3::new(0.7, 0.8, 1.0);
-
-    match c.scene_name.as_str() {
-        "spheres" => Some(Scene {
-            world: random_spheres(),
-            camera_config: def_cam,
-            background_color: def_background,
-        }),
-        "bouncing_spheres" => Some(Scene {
-            world: random_bouncing_spheres(),
-            camera_config: def_cam,
-            background_color: def_background,
-        }),
-        "checker_ground" => Some(Scene {
-            world: random_spheres_checker(),
-            camera_config: def_cam,
-            background_color: def_background,
-        }),
-        "checker_spheres" => Some(Scene {
-            world: checker_spheres(),
-            camera_config: aperture_0(&def_cam),
-            background_color: def_background,
-        }),
-        "perlin_spheres" => Some(Scene {
-            world: perlin_spheres(),
-            camera_config: aperture_0(&def_cam),
-            background_color: def_background,
-        }),
-        "earth" => Some(Scene {
-            world: earth(),
-            camera_config: aperture_0(&def_cam),
-            background_color: def_background,
-        }),
-        "black" => Some(Scene {
-            world: HittableList {
-                objects: Vec::new(),
-            },
-            camera_config: def_cam,
-            background_color: Vec3::zero(),
-        }),
-        "simple_light" => Some(Scene {
-            world: simple_light(),
-            camera_config: simple_light_camera(&def_cam),
-            background_color: Vec3::zero(),
-        }),
-        "cornell_box" => Some(Scene {
-            world: cornell_box(),
-            camera_config: cornell_box_camera(&def_cam),
-            background_color: Vec3::zero(),
-        }),
-        "cornell_smoke" => Some(Scene {
-            world: cornell_smoke(),
-            camera_config: cornell_box_camera(&def_cam),
-            background_color: Vec3::zero(),
-        }),
-        "final_scene" => Some(Scene {
-            world: final_scene(),
-            camera_config: final_scene_camera(&def_cam),
-            background_color: Vec3::zero(),
-        }),
+pub fn get_scenes() -> [&'static str; 11] {
+    [
+        "spheres",
+        "bouncing_spheres",
+        "checker_ground",
+        "checker_spheres",
+        "perlin_spheres",
+        "earth",
+        "black",
+        "simple_light",
+        "cornell_box",
+        "cornell_smoke",
+        "final_scene",
+    ]
+}
+pub fn get_scene_from_name(name: &str) -> Option<Scene> {
+    match name {
+        "spheres" => Some(random_spheres()),
+        "bouncing_spheres" => Some(random_bouncing_spheres()),
+        "checker_ground" => Some(random_spheres_checker()),
+        "checker_spheres" => Some(checker_spheres()),
+        "perlin_spheres" => Some(perlin_spheres()),
+        "earth" => Some(earth()),
+        "black" => Some(black()),
+        "simple_light" => Some(simple_light()),
+        "cornell_box" => Some(cornell_box()),
+        "cornell_smoke" => Some(cornell_smoke()),
+        "final_scene" => Some(final_scene()),
         _ => None,
     }
 }
 
-fn default_cam(aspect_ratio: f64) -> CameraConfig {
+fn default_cam() -> CameraConfig {
     CameraConfig {
         lookfrom: Vec3::new(12.0, 2.0, 3.0),
         lookat: Vec3::new(0.0, 0.0, 0.0),
@@ -92,11 +57,10 @@ fn default_cam(aspect_ratio: f64) -> CameraConfig {
         aperture: 0.1,
         time0: 0.0,
         time1: 1.0,
-        aspect_ratio,
     }
 }
 
-pub fn random_spheres() -> HittableList {
+fn random_spheres() -> Scene {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
 
     // Add the ground
@@ -175,10 +139,14 @@ pub fn random_spheres() -> HittableList {
         }),
     }));
 
-    HittableList { objects }
+    Scene {
+        world: HittableList { objects },
+        camera_config: default_cam(),
+        background_color: Vec3::new(0.7, 0.8, 1.0),
+    }
 }
 
-pub fn random_bouncing_spheres() -> HittableList {
+fn random_bouncing_spheres() -> Scene {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
 
     // Add the ground
@@ -262,10 +230,14 @@ pub fn random_bouncing_spheres() -> HittableList {
         }),
     }));
 
-    HittableList { objects }
+    Scene {
+        world: HittableList { objects },
+        camera_config: default_cam(),
+        background_color: Vec3::new(0.7, 0.8, 1.0),
+    }
 }
 
-pub fn random_spheres_checker() -> HittableList {
+fn random_spheres_checker() -> Scene {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
 
     // Add the ground
@@ -347,17 +319,21 @@ pub fn random_spheres_checker() -> HittableList {
         }),
     }));
 
-    HittableList { objects }
-}
-
-pub fn aperture_0(default: &CameraConfig) -> CameraConfig {
-    CameraConfig {
-        aperture: 0.0,
-        ..*default
+    Scene {
+        world: HittableList { objects },
+        camera_config: default_cam(),
+        background_color: Vec3::new(0.7, 0.8, 1.0),
     }
 }
 
-pub fn checker_spheres() -> HittableList {
+fn aperture_0() -> CameraConfig {
+    CameraConfig {
+        aperture: 0.0,
+        ..default_cam()
+    }
+}
+
+fn checker_spheres() -> Scene {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
 
     let checker: Arc<dyn Texture> = Arc::new(CheckerTexture::from_colors(
@@ -378,10 +354,14 @@ pub fn checker_spheres() -> HittableList {
         material: Arc::clone(&material),
     }));
 
-    HittableList { objects }
+    Scene {
+        world: HittableList { objects },
+        camera_config: aperture_0(),
+        background_color: Vec3::new(0.7, 0.8, 1.0),
+    }
 }
 
-pub fn perlin_spheres() -> HittableList {
+fn perlin_spheres() -> Scene {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
 
     let texture = Arc::new(NoiseTexture::new(4.0));
@@ -399,10 +379,14 @@ pub fn perlin_spheres() -> HittableList {
         material: Arc::clone(&material),
     }));
 
-    HittableList { objects }
+    Scene {
+        world: HittableList { objects },
+        camera_config: aperture_0(),
+        background_color: Vec3::new(0.7, 0.8, 1.0),
+    }
 }
 
-pub fn earth() -> HittableList {
+fn earth() -> Scene {
     let earth_texture = Arc::new(ImageTexture::new("earthmap.jpg").unwrap());
     let earth_surface = Arc::new(Lambertian {
         albedo: earth_texture,
@@ -413,20 +397,34 @@ pub fn earth() -> HittableList {
         material: earth_surface,
     });
 
-    HittableList {
-        objects: vec![globe],
+    Scene {
+        world: HittableList {
+            objects: vec![globe],
+        },
+        camera_config: aperture_0(),
+        background_color: Vec3::new(0.7, 0.8, 1.0),
     }
 }
 
-pub fn simple_light_camera(default: &CameraConfig) -> CameraConfig {
+fn black() -> Scene {
+    Scene {
+        world: HittableList {
+            objects: Vec::new(),
+        },
+        camera_config: default_cam(),
+        background_color: Vec3::zero(),
+    }
+}
+
+fn simple_light_camera() -> CameraConfig {
     CameraConfig {
         lookfrom: Vec3::new(26.0, 3.0, 6.0),
         lookat: Vec3::new(0.0, 2.0, 0.0),
-        ..*default
+        ..default_cam()
     }
 }
 
-pub fn simple_light() -> HittableList {
+fn simple_light() -> Scene {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
 
     let marble: Arc<dyn Material> = Arc::new(Lambertian {
@@ -455,10 +453,14 @@ pub fn simple_light() -> HittableList {
         Arc::clone(&difflight),
     )));
 
-    HittableList { objects }
+    Scene {
+        world: HittableList { objects },
+        camera_config: simple_light_camera(),
+        background_color: Vec3::zero(),
+    }
 }
 
-pub fn cornell_box() -> HittableList {
+fn cornell_box() -> Scene {
     let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
 
     let red: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::new(0.65, 0.05, 0.05)));
@@ -541,39 +543,42 @@ pub fn cornell_box() -> HittableList {
     let box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
     objects.push(box2);
 
-    HittableList { objects }
+    Scene {
+        world: HittableList { objects },
+        camera_config: cornell_box_camera(),
+        background_color: Vec3::zero(),
+    }
 }
 
-fn cornell_box_camera(default: &CameraConfig) -> CameraConfig {
+fn cornell_box_camera() -> CameraConfig {
     CameraConfig {
         lookfrom: Vec3::new(278.0, 278.0, -800.0),
         lookat: Vec3::new(278.0, 270.0, 0.0),
         vfov: 40.0,
         aperture: 0.0,
-        ..*default
+        ..default_cam()
     }
 }
 
-pub fn cornell_smoke() -> HittableList {
+fn cornell_smoke() -> Scene {
     let mut cb = cornell_box();
-    let box1 = cb.objects.pop().unwrap();
-    let box2 = cb.objects.pop().unwrap();
+    let box1 = cb.world.objects.pop().unwrap();
+    let box2 = cb.world.objects.pop().unwrap();
 
-    cb.objects.push(Arc::new(ConstantMedium::from_color(
+    cb.world.objects.push(Arc::new(ConstantMedium::from_color(
         box1,
         0.01,
         Vec3::zero(),
     )));
-    cb.objects.push(Arc::new(ConstantMedium::from_color(
+    cb.world.objects.push(Arc::new(ConstantMedium::from_color(
         box2,
         0.01,
         Vec3::one(),
     )));
-
     cb
 }
 
-pub fn final_scene() -> HittableList {
+fn final_scene() -> Scene {
     use crate::bvh::BVHNode;
     let mut rng = rand::thread_rng();
     let mut boxes: Vec<Arc<dyn Hittable>> = Vec::new();
@@ -699,15 +704,19 @@ pub fn final_scene() -> HittableList {
         Vec3::new(-100.0, 270.0, 395.0),
     )));
 
-    HittableList { objects }
+    Scene {
+        world: HittableList { objects },
+        camera_config: final_scene_camera(),
+        background_color: Vec3::zero(),
+    }
 }
 
-pub fn final_scene_camera(default: &CameraConfig) -> CameraConfig {
+fn final_scene_camera() -> CameraConfig {
     CameraConfig {
         vfov: 40.0,
         lookfrom: Vec3::new(478.0, 278.0, -600.0),
         lookat: Vec3::new(278.0, 278.0, 0.0),
         aperture: 0.0,
-        ..*default
+        ..default_cam()
     }
 }

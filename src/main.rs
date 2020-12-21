@@ -1,6 +1,7 @@
 mod aabb;
 mod bvh;
 mod camera;
+mod cli;
 mod constant_medium;
 mod hittable;
 mod image_helper;
@@ -13,32 +14,33 @@ mod texture;
 
 use camera::Camera;
 use hittable::Hittable;
+use image_helper::Image;
 use render::*;
 
 use std::fs::File;
 use std::sync::Arc;
 
-#[macro_use]
-extern crate clap;
-use clap::App;
-
-fn clamp(x: f64, min: f64, max: f64) -> f64 {
-    if x < min {
-        min
-    } else if x > max {
-        max
-    } else {
-        x
+pub trait Clampable {
+    #[inline]
+    fn clamp_(self, min: Self, max: Self) -> Self
+    where
+        Self: PartialOrd + Sized,
+    {
+        if self < min {
+            min
+        } else if self > max {
+            max
+        } else {
+            self
+        }
     }
 }
 
-enum Format {
-    PPM,
-}
+impl Clampable for f64 {}
 
 enum Output {
-    File(String, Format),
-    Stdout(Format),
+    File(String, image::ImageFormat),
+    Stdout(image::ImageFormat),
 }
 
 pub struct Config {
@@ -47,81 +49,15 @@ pub struct Config {
     samples_per_pixel: usize,
     max_depth: u32,
     cpus: usize,
-    show_progress_bar: bool,
     print_debug: bool,
     output: Output,
     scene_name: String,
     avoid_bvh: bool,
+    force_plain_ppm: bool,
 }
 
-fn get_config() -> Config {
-    let yaml = load_yaml!("cli.yaml");
-    let args = App::from_yaml(yaml).get_matches();
-
-    let image_height: usize = args
-        .value_of("image_height")
-        .unwrap_or("1440")
-        .parse()
-        .expect("Invalid image height");
-
-    let aspect_ratio = {
-        let r = args.value_of("aspect_ratio").unwrap_or("16/9");
-        let p: Vec<_> = r.split('/').map(str::parse::<usize>).collect();
-        assert_eq!(p.len(), 2, "Invalid aspect ratio format");
-        let w = p[0].as_ref().expect("Invalid aspect ratio width");
-        let h = p[1].as_ref().expect("Invalid aspect ratio height");
-        *w as f64 / *h as f64
-    };
-
-    // Antialias / noise
-    let samples_per_pixel: usize = args
-        .value_of("samples_per_pixel")
-        .unwrap_or("500")
-        .parse()
-        .expect("Invalid spp");
-    // Max recursive rays
-    let max_depth: u32 = args
-        .value_of("ray_depth")
-        .unwrap_or("50")
-        .parse()
-        .expect("Invalid ray depth");
-
-    let cpus: usize = if let Some(cpus) = args.value_of("cores") {
-        cpus.parse().expect("Invalid number of cores")
-    } else {
-        num_cpus::get_physical()
-    };
-
-    let print_debug = args.is_present("debug");
-
-    let format = Format::PPM;
-    let output = if args.is_present("stdout") {
-        Output::Stdout(format)
-    } else {
-        let filename: String = args.value_of("output").unwrap_or("image.ppm").to_string();
-        Output::File(filename, format)
-    };
-
-    let scene_name = args.value_of("scene").unwrap_or("spheres").to_string();
-
-    let avoid_bvh = args.is_present("avoid_bvh");
-
-    Config {
-        image_height,
-        aspect_ratio,
-        samples_per_pixel,
-        max_depth,
-        cpus,
-        show_progress_bar: true,
-        print_debug,
-        output,
-        scene_name,
-        avoid_bvh,
-    }
-}
-
-fn main() -> Result<(), std::io::Error> {
-    let config = get_config();
+fn main() -> Result<(), image::ImageError> {
+    let config = cli::get_config();
 
     // Test that the file can be written
     if let Output::File(name, _) = &config.output {
@@ -129,7 +65,8 @@ fn main() -> Result<(), std::io::Error> {
     }
 
     // World
-    let scene = scenes::gen_scene_from_name(&config).expect("Cannot build unknown scene");
+    let scene =
+        scenes::get_scene_from_name(&config.scene_name).expect("Cannot build unknown scene");
     let world: Arc<dyn Hittable> = if config.avoid_bvh {
         Arc::new(scene.world)
     } else {
@@ -137,17 +74,25 @@ fn main() -> Result<(), std::io::Error> {
     };
 
     // Camera
-    let cam = Arc::new(Camera::new(&scene.camera_config));
+    let cam = Arc::new(Camera::new(&scene.camera_config, config.aspect_ratio));
 
     // Render
-    let (image, elapsed) = render::render(RenderConfig::from(
+    if config.print_debug {
+        eprintln!("Scene: {}", config.scene_name);
+        eprintln!("Aspect ratio: {}", config.aspect_ratio);
+        eprintln!("SPP: {}", config.samples_per_pixel);
+        eprintln!("Ray depth: {}", config.max_depth);
+        eprintln!("Global BVH: {}", !config.avoid_bvh);
+    }
+
+    let (img, elapsed) = render::render(RenderConfig::from(
         &config,
         scene.background_color,
         world,
         cam,
     ));
 
-    let (render_time, tag) = {
+    let (render_time, unit) = {
         let mut render_time = elapsed.as_secs_f64();
         let unit;
         if render_time > 60.0 {
@@ -158,16 +103,53 @@ fn main() -> Result<(), std::io::Error> {
         }
         (render_time, unit)
     };
-    eprintln!("\nDone! Rendered in {:.3} {}", render_time, tag);
+    eprintln!("\nDone! Rendered in {:.3} {}", render_time, unit);
 
     // Saving
     eprintln!("Writing image...");
-    let mut file: Box<dyn std::io::Write> = match config.output {
-        Output::File(name, _) => Box::new(File::create(name).expect("Cannot open output file")),
-        Output::Stdout(_) => Box::new(std::io::stdout()),
-    };
 
-    image.write_as_ppm(&mut file)?;
+    if config.print_debug {
+        eprintln!(
+            "\tUsing \"{}\" as format",
+            if config.force_plain_ppm {
+                "plain ppm".to_string()
+            } else {
+                format!(
+                    "{:?}",
+                    match config.output {
+                        Output::File(_, format) => format,
+                        Output::Stdout(format) => format,
+                    }
+                )
+            }
+        );
+        eprintln!(
+            "\tWriting it to \"{}\"",
+            match config.output {
+                Output::File(ref name, _) => name,
+                Output::Stdout(_) => "stdout",
+            }
+        );
+    }
+
+    if config.force_plain_ppm {
+        let mut file: Box<dyn std::io::Write> = match config.output {
+            Output::File(name, _) => Box::new(File::create(name).expect("Cannot open output file")),
+            Output::Stdout(_) => Box::new(std::io::stdout()),
+        };
+        img.write_as_plain_ppm(&mut file)?;
+    } else {
+        let img = image::DynamicImage::ImageRgb8(img);
+        match config.output {
+            Output::File(name, format) => {
+                let mut file = File::create(name).expect("Cannot open ouput file");
+                img.write_to(&mut file, format)?;
+            }
+            Output::Stdout(format) => {
+                img.write_to(&mut std::io::stdout(), format)?;
+            }
+        };
+    }
     eprintln!("Image written!");
 
     Ok(())

@@ -50,10 +50,10 @@ impl BVHNode {
         let box_left = left.bounding_box(time0, time1);
         let box_right = right.bounding_box(time0, time1);
 
-        let b_box = if box_left.is_none() || box_right.is_none() {
-            AABB::default()
+        let b_box = if let (Some(bl), Some(br)) = (box_left, box_right) {
+            surrounding_box(&bl, &br)
         } else {
-            surrounding_box(&box_left.unwrap(), &box_right.unwrap())
+            AABB::default()
         };
 
         Self { left, right, b_box }

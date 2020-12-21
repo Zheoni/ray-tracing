@@ -1,4 +1,4 @@
-use crate::clamp;
+use crate::Clampable;
 use image::io::Reader as ImageReader;
 use perlin_noise::PNG;
 use std::sync::Arc;
@@ -17,7 +17,8 @@ impl SolidColor {
         Self { color }
     }
 
-    pub fn _rgb(red: f64, green: f64, blue: f64) -> Self {
+    #[allow(unused)]
+    pub fn rgb(red: f64, green: f64, blue: f64) -> Self {
         Self {
             color: Vec3::new(red, green, blue),
         }
@@ -36,7 +37,8 @@ pub struct CheckerTexture {
 }
 
 impl CheckerTexture {
-    pub fn _new(odd: Arc<dyn Texture>, even: Arc<dyn Texture>) -> Self {
+    #[allow(unused)]
+    pub fn new(odd: Arc<dyn Texture>, even: Arc<dyn Texture>) -> Self {
         Self { odd, even }
     }
 
@@ -94,8 +96,8 @@ impl ImageTexture {
 
 impl Texture for ImageTexture {
     fn value(&self, u: f64, v: f64, _p: &Vec3) -> Vec3 {
-        let u = clamp(u, 0.0, 1.0);
-        let v = 1.0 - clamp(v, 0.0, 1.0);
+        let u = u.clamp_(0.0, 1.0);
+        let v = 1.0 - v.clamp_(0.0, 1.0);
 
         let width = self.img.width();
         let height = self.img.height();

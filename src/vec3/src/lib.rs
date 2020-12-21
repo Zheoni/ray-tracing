@@ -14,7 +14,7 @@ const FLOAT_CMP_ERROR: f64 = 1e-8;
 /// a RGB color or anything you may need it to.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Vec3 {
-    v: [f64; 3],
+    pub v: [f64; 3],
 }
 
 impl Vec3 {
@@ -333,6 +333,15 @@ impl Deref for Vec3 {
 impl From<[f64; 3]> for Vec3 {
     fn from(v: [f64; 3]) -> Self {
         Self { v }
+    }
+}
+
+impl std::iter::Sum for Vec3 {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        iter.fold(Vec3::default(), std::ops::Add::add)
     }
 }
 

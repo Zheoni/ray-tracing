@@ -8,7 +8,6 @@ pub struct CameraConfig {
     pub lookat: Vec3,
     pub vup: Vec3,
     pub vfov: f64,
-    pub aspect_ratio: f64,
     pub aperture: f64,
     pub focus_distance: f64,
     pub time0: f64,
@@ -22,18 +21,19 @@ pub struct Camera {
     vertical: Vec3,
     u: Vec3,
     v: Vec3,
-    _w: Vec3,
+    #[allow(dead_code)]
+    w: Vec3,
     lens_radius: f64,
     time0: f64,
     time1: f64,
 }
 
 impl Camera {
-    pub fn new(c: &CameraConfig) -> Self {
+    pub fn new(c: &CameraConfig, aspect_ratio: f64) -> Self {
         let theta = c.vfov.to_radians();
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h;
-        let viewport_width = c.aspect_ratio * viewport_height;
+        let viewport_width = aspect_ratio * viewport_height;
 
         let w = (c.lookfrom - c.lookat).unit_vector();
         let u = c.vup.cross(&w).unit_vector();
@@ -50,7 +50,7 @@ impl Camera {
             horizontal,
             vertical,
             lower_left_corner,
-            _w: w,
+            w,
             u,
             v,
             lens_radius,
