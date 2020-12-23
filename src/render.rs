@@ -46,11 +46,11 @@ pub fn render(config: RenderConfig) -> (RgbImage, Duration) {
     if config.print_debug {
         eprintln!("Resolution: {}x{}", config.image_width, config.image_height);
     }
-    rayon::ThreadPoolBuilder::new()
+    let tp = rayon::ThreadPoolBuilder::new()
         .num_threads(config.cpus)
-        .build_global()
+        .build()
         .unwrap();
-    eprintln!("Rendering with {} cores...", rayon::current_num_threads());
+    eprintln!("Rendering with {} cores...", tp.current_num_threads());
 
     let (tx, rx) = mpsc::channel::<bool>();
 
@@ -70,7 +70,7 @@ pub fn render(config: RenderConfig) -> (RgbImage, Duration) {
 
     let start_instant = Instant::now();
     // gives ownership of tx, therefore when function ends, tx is disconnected
-    let image = RgbImage::par_compute(config.image_width, config.image_height, tx, |i, j| {
+    let image = tp.install(|| RgbImage::par_compute(config.image_width, config.image_height, tx, |i, j| {
         let pixel: Vec3 = (0..config.samples_per_pixel)
             .map(|_| {
                 let mut rng = thread_rng();
@@ -85,7 +85,7 @@ pub fn render(config: RenderConfig) -> (RgbImage, Duration) {
             })
             .sum();
         pixel / config.samples_per_pixel as f64
-    });
+    }));
     let elapsed = start_instant.elapsed();
 
     progress_thread.join().expect("Progress thread panicked");
