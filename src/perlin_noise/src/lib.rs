@@ -2,6 +2,7 @@ use vec3::Vec3;
 
 const POINT_COUNT: usize = 256;
 
+#[derive(Clone)]
 pub struct PerlinNoiseGenerator {
     ranvec: [Vec3; POINT_COUNT],
     perm_x: [usize; POINT_COUNT],

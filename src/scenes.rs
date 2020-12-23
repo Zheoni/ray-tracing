@@ -4,13 +4,12 @@ use crate::hittable::{Hittable, HittableList, RotateY, Translate};
 use crate::material::*;
 use crate::objects::*;
 use crate::texture::*;
-use std::sync::Arc;
 use vec3::Vec3;
 
 use rand::Rng;
 
 pub struct Scene {
-    pub world: HittableList,
+    pub world: HittableList<'static>,
     pub camera_config: CameraConfig,
     pub background_color: Vec3,
 }
@@ -61,18 +60,14 @@ fn default_cam() -> CameraConfig {
 }
 
 fn random_spheres() -> Scene {
-    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
     // Add the ground
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, -1000.0, 0.0),
         radius: 1000.0,
-        material: Arc::new(Lambertian::from_color(Vec3::new(0.5, 0.5, 0.5))),
+        material: Lambertian::from_color(Vec3::new(0.5, 0.5, 0.5)),
     }));
-
-    let glass: Arc<dyn Material> = Arc::new(Dielectric {
-        index_refraction: 1.5,
-    });
 
     for a in -11..=11 {
         for b in -11..=11 {
@@ -88,27 +83,29 @@ fn random_spheres() -> Scene {
                     // diffuse
                     let color = Vec3::random() * Vec3::random();
 
-                    objects.push(Arc::new(Sphere {
+                    objects.push(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: Arc::new(Lambertian::from_color(color)),
+                        material: Lambertian::from_color(color),
                     }));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Vec3::random_in_range(0.5, 1.0);
                     let fuzz = rand::thread_rng().gen_range(0.0, 0.5);
 
-                    objects.push(Arc::new(Sphere {
+                    objects.push(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: Arc::new(Metal { albedo, fuzz }),
+                        material: Metal { albedo, fuzz },
                     }));
                 } else {
                     // glass
-                    objects.push(Arc::new(Sphere {
+                    objects.push(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: Arc::clone(&glass),
+                        material: Dielectric {
+                            index_refraction: 1.5,
+                        },
                     }));
                 }
             }
@@ -116,27 +113,29 @@ fn random_spheres() -> Scene {
     }
 
     // Big glass boi
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, 1.0, 0.0),
         radius: 1.0,
-        material: Arc::clone(&glass),
+        material: Dielectric {
+            index_refraction: 1.5,
+        },
     }));
 
     // Big diffuse boi
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(-4.0, 1.0, 0.0),
         radius: 1.0,
-        material: Arc::new(Lambertian::from_color(Vec3::new(0.4, 0.2, 0.1))),
+        material: Lambertian::from_color(Vec3::new(0.4, 0.2, 0.1)),
     }));
 
     // Big metal boi
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(4.0, 1.0, 0.0),
         radius: 1.0,
-        material: Arc::new(Metal {
+        material: Metal {
             albedo: Vec3::new(0.7, 0.6, 0.5),
             fuzz: 0.0,
-        }),
+        },
     }));
 
     Scene {
@@ -147,13 +146,13 @@ fn random_spheres() -> Scene {
 }
 
 fn random_bouncing_spheres() -> Scene {
-    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
     // Add the ground
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, -1000.0, 0.0),
         radius: 1000.0,
-        material: Arc::new(Lambertian::from_color(Vec3::new(0.5, 0.5, 0.5))),
+        material: Lambertian::from_color(Vec3::new(0.5, 0.5, 0.5)),
     }));
 
     for a in -11..=11 {
@@ -172,32 +171,32 @@ fn random_bouncing_spheres() -> Scene {
 
                     let center1 = center + Vec3::new(0.0, rand::random::<f64>() * 0.5, 0.0);
 
-                    objects.push(Arc::new(MovingSphere {
+                    objects.push(Box::new(MovingSphere {
                         center0: center,
                         center1,
                         time0: 0.0,
                         time1: 1.0,
                         radius: 0.2,
-                        material: Arc::new(Lambertian::from_color(color)),
+                        material: Lambertian::from_color(color),
                     }));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Vec3::random_in_range(0.5, 1.0);
                     let fuzz = rand::thread_rng().gen_range(0.0, 0.5);
 
-                    objects.push(Arc::new(Sphere {
+                    objects.push(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: Arc::new(Metal { albedo, fuzz }),
+                        material: Metal { albedo, fuzz },
                     }));
                 } else {
                     // glass
-                    objects.push(Arc::new(Sphere {
+                    objects.push(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: Arc::new(Dielectric {
+                        material: Dielectric {
                             index_refraction: 1.5,
-                        }),
+                        },
                     }));
                 }
             }
@@ -205,29 +204,29 @@ fn random_bouncing_spheres() -> Scene {
     }
 
     // Big glass boi
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, 1.0, 0.0),
         radius: 1.0,
-        material: Arc::new(Dielectric {
+        material: Dielectric {
             index_refraction: 1.5,
-        }),
+        },
     }));
 
     // Big diffuse boi
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(-4.0, 1.0, 0.0),
         radius: 1.0,
-        material: Arc::new(Lambertian::from_color(Vec3::new(0.4, 0.2, 0.1))),
+        material: Lambertian::from_color(Vec3::new(0.4, 0.2, 0.1)),
     }));
 
     // Big metal boi
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(4.0, 1.0, 0.0),
         radius: 1.0,
-        material: Arc::new(Metal {
+        material: Metal {
             albedo: Vec3::new(0.7, 0.6, 0.5),
             fuzz: 0.0,
-        }),
+        },
     }));
 
     Scene {
@@ -238,16 +237,16 @@ fn random_bouncing_spheres() -> Scene {
 }
 
 fn random_spheres_checker() -> Scene {
-    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
     // Add the ground
     let cheker = CheckerTexture::from_colors(Vec3::new(0.2, 0.3, 0.1), Vec3::new(0.9, 0.9, 0.9));
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, -1000.0, 0.0),
         radius: 1000.0,
-        material: Arc::new(Lambertian {
-            albedo: Arc::new(cheker),
-        }),
+        material: Lambertian {
+            albedo: cheker,
+        },
     }));
 
     for a in -11..=11 {
@@ -264,29 +263,29 @@ fn random_spheres_checker() -> Scene {
                     // diffuse
                     let color = Vec3::random() * Vec3::random();
 
-                    objects.push(Arc::new(Sphere {
+                    objects.push(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: Arc::new(Lambertian::from_color(color)),
+                        material: Lambertian::from_color(color),
                     }));
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Vec3::random_in_range(0.5, 1.0);
                     let fuzz = rand::thread_rng().gen_range(0.0, 0.5);
 
-                    objects.push(Arc::new(Sphere {
+                    objects.push(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: Arc::new(Metal { albedo, fuzz }),
+                        material: Metal { albedo, fuzz },
                     }));
                 } else {
                     // glass
-                    objects.push(Arc::new(Sphere {
+                    objects.push(Box::new(Sphere {
                         center,
                         radius: 0.2,
-                        material: Arc::new(Dielectric {
+                        material: Dielectric {
                             index_refraction: 1.5,
-                        }),
+                        },
                     }));
                 }
             }
@@ -294,29 +293,29 @@ fn random_spheres_checker() -> Scene {
     }
 
     // Big glass boi
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, 1.0, 0.0),
         radius: 1.0,
-        material: Arc::new(Dielectric {
+        material: Dielectric {
             index_refraction: 1.5,
-        }),
+        },
     }));
 
     // Big diffuse boi
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(-4.0, 1.0, 0.0),
         radius: 1.0,
-        material: Arc::new(Lambertian::from_color(Vec3::new(0.4, 0.2, 0.1))),
+        material: Lambertian::from_color(Vec3::new(0.4, 0.2, 0.1)),
     }));
 
     // Big metal boi
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(4.0, 1.0, 0.0),
         radius: 1.0,
-        material: Arc::new(Metal {
+        material: Metal {
             albedo: Vec3::new(0.7, 0.6, 0.5),
             fuzz: 0.0,
-        }),
+        },
     }));
 
     Scene {
@@ -334,24 +333,24 @@ fn aperture_0() -> CameraConfig {
 }
 
 fn checker_spheres() -> Scene {
-    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
-    let checker: Arc<dyn Texture> = Arc::new(CheckerTexture::from_colors(
+    let checker = CheckerTexture::from_colors(
         Vec3::new(0.2, 0.3, 0.1),
         Vec3::new(0.9, 0.9, 0.9),
-    ));
-    let material: Arc<dyn Material> = Arc::new(Lambertian {
-        albedo: Arc::clone(&checker),
-    });
-    objects.push(Arc::new(Sphere {
+    );
+    let material = Lambertian {
+        albedo: checker,
+    };
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, -10.0, 0.0),
         radius: 10.0,
-        material: Arc::clone(&material),
+        material: material.clone(),
     }));
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, 10.0, 0.0),
         radius: 10.0,
-        material: Arc::clone(&material),
+        material,
     }));
 
     Scene {
@@ -362,21 +361,21 @@ fn checker_spheres() -> Scene {
 }
 
 fn perlin_spheres() -> Scene {
-    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
-    let texture = Arc::new(NoiseTexture::new(4.0));
-    let material: Arc<dyn Material> = Arc::new(Lambertian { albedo: texture });
+    let texture = NoiseTexture::new(4.0);
+    let material = Lambertian { albedo: texture };
 
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, -1000.0, 0.0),
         radius: 1000.0,
-        material: Arc::clone(&material),
+        material: material.clone(),
     }));
 
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, 2.0, 0.0),
         radius: 2.0,
-        material: Arc::clone(&material),
+        material,
     }));
 
     Scene {
@@ -387,11 +386,11 @@ fn perlin_spheres() -> Scene {
 }
 
 fn earth() -> Scene {
-    let earth_texture = Arc::new(ImageTexture::new("earthmap.jpg").unwrap());
-    let earth_surface = Arc::new(Lambertian {
+    let earth_texture = ImageTexture::new("earthmap.jpg").unwrap();
+    let earth_surface = Lambertian {
         albedo: earth_texture,
-    });
-    let globe = Arc::new(Sphere {
+    };
+    let globe = Box::new(Sphere {
         center: Vec3::zero(),
         radius: 2.0,
         material: earth_surface,
@@ -425,33 +424,33 @@ fn simple_light_camera() -> CameraConfig {
 }
 
 fn simple_light() -> Scene {
-    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
-    let marble: Arc<dyn Material> = Arc::new(Lambertian {
-        albedo: Arc::new(NoiseTexture::new(4.0)),
-    });
+    let marble = Lambertian {
+        albedo: NoiseTexture::new(4.0),
+    };
 
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, -1000.0, 0.0),
         radius: 1000.0,
-        material: Arc::clone(&marble),
+        material: marble.clone(),
     }));
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, 2.0, 0.0),
         radius: 2.0,
-        material: Arc::clone(&marble),
+        material: marble,
     }));
 
-    let difflight: Arc<dyn Material> = Arc::new(DiffuseLight::from_color(Vec3::splat(4.0)));
-    objects.push(Arc::new(Rect::new(
-        RectAxis::XY,
-        3.0,
-        5.0,
-        1.0,
-        3.0,
-        -2.0,
-        Arc::clone(&difflight),
-    )));
+    let difflight = DiffuseLight::from_color(Vec3::splat(4.0));
+    objects.push(Box::new(Rect {
+        in_plane: XY,
+        a0: 3.0,
+        a1: 5.0,
+        b0: 1.0,
+        b1: 3.0,
+        k: -2.0,
+        material: difflight,
+    }));
 
     Scene {
         world: HittableList { objects },
@@ -461,86 +460,88 @@ fn simple_light() -> Scene {
 }
 
 fn cornell_box() -> Scene {
-    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
-    let red: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::new(0.65, 0.05, 0.05)));
-    let white: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::splat(0.73)));
-    let green: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::new(0.12, 0.45, 0.15)));
-    let light: Arc<dyn Material> = Arc::new(DiffuseLight::from_color(Vec3::splat(15.0)));
+    let red = Lambertian::from_color(Vec3::new(0.65, 0.05, 0.05));
+    let white = Lambertian::from_color(Vec3::splat(0.73));
+    let green = Lambertian::from_color(Vec3::new(0.12, 0.45, 0.15));
+    let light = DiffuseLight::from_color(Vec3::splat(15.0));
 
     // Sides
-    objects.push(Arc::new(Rect::new(
-        RectAxis::YZ,
-        0.0,
-        555.0,
-        0.0,
-        555.0,
-        555.0,
-        green,
-    )));
-    objects.push(Arc::new(Rect::new(
-        RectAxis::YZ,
-        0.0,
-        555.0,
-        0.0,
-        555.0,
-        0.0,
-        red,
-    )));
-    objects.push(Arc::new(Rect::new(
-        RectAxis::XZ,
-        213.0,
-        343.0,
-        227.0,
-        332.0,
-        554.0,
-        light,
-    )));
-    objects.push(Arc::new(Rect::new(
-        RectAxis::XZ,
-        0.0,
-        555.0,
-        0.0,
-        555.0,
-        0.0,
-        Arc::clone(&white),
-    )));
-    objects.push(Arc::new(Rect::new(
-        RectAxis::XZ,
-        0.0,
-        555.0,
-        0.0,
-        555.0,
-        555.0,
-        Arc::clone(&white),
-    )));
-    objects.push(Arc::new(Rect::new(
-        RectAxis::XY,
-        0.0,
-        555.0,
-        0.0,
-        555.0,
-        555.0,
-        Arc::clone(&white),
-    )));
+    objects.push(Box::new(Rect {
+        in_plane: YZ,
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 555.0,
+        material: green,
+    }));
+    objects.push(Box::new(Rect {
+        in_plane: YZ,
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 0.0,
+        material: red,
+    }));
+    objects.push(Box::new(Rect {
+        in_plane: XZ,
+        a0: 3.0,
+        a1: 3.0,
+        b0: 7.0,
+        b1: 2.0,
+        k: 4.0,
+        material: light,
+    }));
+    objects.push(Box::new(Rect {
+        in_plane: XZ,
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 0.0,
+        material: white.clone(),
+    }));
+    objects.push(Box::new(Rect {
+        in_plane: XZ,
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 555.0,
+        material: white.clone(),
+    }));
+    objects.push(Box::new(Rect {
+        in_plane: XY,
+        a0: 0.0,
+        a1: 555.0,
+        b0: 0.0,
+        b1: 555.0,
+        k: 555.0,
+        material: white.clone(),
+    }));
 
     // Blocks
-    let box1 = Arc::new(Block::new(
+    let box1 = Block::new(
         Vec3::zero(),
         Vec3::new(165.0, 330.0, 165.0),
-        Arc::clone(&white),
-    ));
-    let box1 = Arc::new(RotateY::new(box1, 15.0));
-    let box1 = Arc::new(Translate::new(box1, Vec3::new(265.0, 0.0, 295.0)));
+        white.clone(),
+    );
+    let box1 = RotateY::new(box1, 15.0);
+    let box1 = Translate::new(box1, Vec3::new(265.0, 0.0, 295.0));
+    let box1 = Box::new(box1);
     objects.push(box1);
 
-    let box2 = Arc::new(Block::new(
+    let box2 = Block::new(
         Vec3::zero(),
         Vec3::new(165.0, 165.0, 165.0),
-        Arc::clone(&white),
-    ));
-    let box2 = Arc::new(RotateY::new(box2, -18.0));
-    let box2 = Arc::new(Translate::new(box2, Vec3::new(130.0, 0.0, 65.0)));
+        white,
+    );
+    let box2 = RotateY::new(box2, -18.0);
+    let box2 = Translate::new(box2, Vec3::new(130.0, 0.0, 65.0));
+    let box2 = Box::new(box2);
     objects.push(box2);
 
     Scene {
@@ -562,15 +563,33 @@ fn cornell_box_camera() -> CameraConfig {
 
 fn cornell_smoke() -> Scene {
     let mut cb = cornell_box();
-    let box1 = cb.world.objects.pop().unwrap();
-    let box2 = cb.world.objects.pop().unwrap();
+    cb.world.objects.pop().unwrap();
+    cb.world.objects.pop().unwrap();
 
-    cb.world.objects.push(Arc::new(ConstantMedium::from_color(
+    let white = Lambertian::from_color(Vec3::splat(0.73));
+
+    let box1 = Block::new(
+        Vec3::zero(),
+        Vec3::new(165.0, 330.0, 165.0),
+        white.clone(),
+    );
+    let box1 = RotateY::new(box1, 15.0);
+    let box1 = Translate::new(box1, Vec3::new(265.0, 0.0, 295.0));
+
+    let box2 = Block::new(
+        Vec3::zero(),
+        Vec3::new(165.0, 165.0, 165.0),
+        white,
+    );
+    let box2 = RotateY::new(box2, -18.0);
+    let box2 = Translate::new(box2, Vec3::new(130.0, 0.0, 65.0));
+
+    cb.world.objects.push(Box::new(ConstantMedium::from_color(
         box1,
         0.01,
         Vec3::zero(),
     )));
-    cb.world.objects.push(Arc::new(ConstantMedium::from_color(
+    cb.world.objects.push(Box::new(ConstantMedium::from_color(
         box2,
         0.01,
         Vec3::one(),
@@ -579,11 +598,11 @@ fn cornell_smoke() -> Scene {
 }
 
 fn final_scene() -> Scene {
-    use crate::bvh::BVHNode;
+    use crate::bvh::BVH;
     let mut rng = rand::thread_rng();
-    let mut boxes: Vec<Arc<dyn Hittable>> = Vec::new();
+    let mut boxes: Vec<Box<dyn Hittable>> = Vec::new();
 
-    let ground: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::new(0.48, 0.83, 0.53)));
+    let ground = Lambertian::from_color(Vec3::new(0.48, 0.83, 0.53));
 
     let boxes_per_side = 20;
     for i in 0..boxes_per_side {
@@ -596,33 +615,33 @@ fn final_scene() -> Scene {
             let y1 = rng.gen_range(1.0, 101.0);
             let z1 = z0 + w;
 
-            boxes.push(Arc::new(Block::new(
+            boxes.push(Box::new(Block::new(
                 Vec3::new(x0, y0, z0),
                 Vec3::new(x1, y1, z1),
-                Arc::clone(&ground),
+                ground.clone(),
             )));
         }
     }
 
-    let mut objects: Vec<Arc<dyn Hittable>> = Vec::new();
+    let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
-    objects.push(Arc::new(BVHNode::build_tree(&mut boxes, 0.0, 1.0)));
+    objects.push(Box::new(BVH::build_tree(boxes, 0.0, 1.0)));
 
-    let light: Arc<dyn Material> = Arc::new(DiffuseLight::from_color(Vec3::splat(7.0)));
-    objects.push(Arc::new(Rect::new(
-        RectAxis::XZ,
-        123.0,
-        423.0,
-        147.0,
-        412.0,
-        445.0,
-        Arc::clone(&light),
-    )));
+    let light = DiffuseLight::from_color(Vec3::splat(7.0));
+    objects.push(Box::new(Rect {
+        in_plane: XZ,
+        a0: 123.0,
+        a1:423.0,
+        b0: 147.0,
+        b1: 412.0,
+        k: 445.0,
+        material: light,
+    }));
 
     let center0 = Vec3::new(400.0, 400.0, 200.0);
     let center1 = center0 + Vec3::new(30.0, 0.0, 0.0);
-    let moving_sphere_material = Arc::new(Lambertian::from_color(Vec3::new(0.7, 0.3, 0.1)));
-    objects.push(Arc::new(MovingSphere {
+    let moving_sphere_material = Lambertian::from_color(Vec3::new(0.7, 0.3, 0.1));
+    objects.push(Box::new(MovingSphere {
         center0,
         center1,
         time0: 0.0,
@@ -631,76 +650,76 @@ fn final_scene() -> Scene {
         material: moving_sphere_material,
     }));
 
-    let glass: Arc<dyn Material> = Arc::new(Dielectric {
+    let glass = Dielectric {
         index_refraction: 0.5,
-    });
-    objects.push(Arc::new(Sphere {
+    };
+    objects.push(Box::new(Sphere {
         center: Vec3::new(260.0, 150.0, 45.0),
         radius: 50.0,
-        material: Arc::clone(&glass),
+        material: glass.clone(),
     }));
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, 150.0, 145.0),
         radius: 50.0,
-        material: Arc::new(Metal {
+        material: Metal {
             albedo: Vec3::new(0.8, 0.8, 0.9),
             fuzz: 1.0,
-        }),
+        },
     }));
 
-    let boundary: Arc<dyn Hittable> = Arc::new(Sphere {
+    let boundary = Sphere {
         center: Vec3::new(360.0, 150.0, 145.0),
         radius: 70.0,
-        material: Arc::clone(&glass),
-    });
-    objects.push(Arc::clone(&boundary));
-    objects.push(Arc::new(ConstantMedium::from_color(
-        Arc::clone(&boundary),
+        material: glass.clone(),
+    };
+    objects.push(Box::new(boundary.clone()));
+    objects.push(Box::new(ConstantMedium::from_color(
+        boundary,
         0.2,
         Vec3::new(0.2, 0.4, 0.9),
     )));
-    let boundary: Arc<dyn Hittable> = Arc::new(Sphere {
+    let boundary = Sphere {
         center: Vec3::zero(),
         radius: 5000.0,
-        material: Arc::clone(&glass),
-    });
-    objects.push(Arc::new(ConstantMedium::from_color(
-        Arc::clone(&boundary),
+        material: glass,
+    };
+    objects.push(Box::new(ConstantMedium::from_color(
+        boundary,
         0.0001,
         Vec3::one(),
     )));
 
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(400.0, 200.0, 400.0),
         radius: 100.0,
-        material: Arc::new(Lambertian {
-            albedo: Arc::new(ImageTexture::new("earthmap.jpg").unwrap()),
-        }),
+        material: Lambertian {
+            albedo: ImageTexture::new("earthmap.jpg").unwrap(),
+        },
     }));
-    objects.push(Arc::new(Sphere {
+    objects.push(Box::new(Sphere {
         center: Vec3::new(220.0, 280.0, 300.0),
         radius: 80.0,
-        material: Arc::new(Lambertian {
-            albedo: Arc::new(NoiseTexture::new(0.1)),
-        }),
+        material: Lambertian {
+            albedo: NoiseTexture::new(0.1),
+        },
     }));
 
-    let mut boxes: Vec<Arc<dyn Hittable>> = Vec::new();
-    let white: Arc<dyn Material> = Arc::new(Lambertian::from_color(Vec3::splat(0.73)));
+    let mut boxes: Vec<Box<dyn Hittable>> = Vec::new();
+    let white = Lambertian::from_color(Vec3::splat(0.73));
     let ns = 1000;
     for _ in 0..ns {
-        boxes.push(Arc::new(Sphere {
+        boxes.push(Box::new(Sphere {
             center: Vec3::random_in_range(0.0, 165.0),
             radius: 10.0,
-            material: Arc::clone(&white),
+            material: white.clone(),
         }))
     }
 
-    objects.push(Arc::new(Translate::new(
-        Arc::new(RotateY::new(
-            Arc::new(BVHNode::build_tree(&mut boxes, 0.0, 1.0)),
+    objects.push(Box::new(Translate::new(
+        RotateY::new(
+            BVH::build_tree(boxes, 0.0, 1.0),
             15.0,
-        )),
+        ),
         Vec3::new(-100.0, 270.0, 395.0),
     )));
 

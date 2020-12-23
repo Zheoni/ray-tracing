@@ -2,7 +2,6 @@ use crate::hittable::HitRecord;
 use crate::ray::Ray;
 use crate::texture::{SolidColor, Texture};
 use std::ops::Neg;
-use std::sync::Arc;
 use vec3::Vec3;
 
 pub trait Material: Send + Sync {
@@ -23,19 +22,20 @@ fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f64) -> Vec3 {
     r_out_perp + r_out_parallel
 }
 
-pub struct Lambertian {
-    pub albedo: Arc<dyn Texture>,
+#[derive(Clone)]
+pub struct Lambertian<T: Texture> {
+    pub albedo: T,
 }
 
-impl Lambertian {
+impl Lambertian<SolidColor> {
     pub fn from_color(color: Vec3) -> Self {
         Self {
-            albedo: Arc::new(SolidColor::new(color)),
+            albedo: SolidColor::new(color),
         }
     }
 }
 
-impl Material for Lambertian {
+impl<T: Texture> Material for Lambertian<T> {
     fn scatter(&self, r_in: &Ray, hit: &HitRecord) -> Option<(Vec3, Ray)> {
         let mut scatter_direction = hit.normal + Vec3::random_unit_vector();
 
@@ -50,6 +50,7 @@ impl Material for Lambertian {
     }
 }
 
+#[derive(Clone)]
 pub struct Metal {
     pub albedo: Vec3,
     pub fuzz: f64,
@@ -75,6 +76,7 @@ impl Material for Metal {
     }
 }
 
+#[derive(Clone)]
 pub struct Dielectric {
     pub index_refraction: f64,
 }
@@ -116,24 +118,20 @@ impl Material for Dielectric {
     }
 }
 
-pub struct DiffuseLight {
-    emit: Arc<dyn Texture>,
+#[derive(Clone)]
+pub struct DiffuseLight<T: Texture> {
+    emit: T,
 }
 
-impl DiffuseLight {
-    #[allow(unused)]
-    pub fn new(emit: Arc<dyn Texture>) -> Self {
-        Self { emit }
-    }
-
+impl DiffuseLight<SolidColor> {
     pub fn from_color(color: Vec3) -> Self {
         Self {
-            emit: Arc::new(SolidColor::new(color)),
+            emit: SolidColor::new(color),
         }
     }
 }
 
-impl Material for DiffuseLight {
+impl<T: Texture> Material for DiffuseLight<T> {
     fn scatter(&self, _r_in: &Ray, _hit: &HitRecord) -> Option<(Vec3, Ray)> {
         None
     }
@@ -143,23 +141,20 @@ impl Material for DiffuseLight {
     }
 }
 
-pub struct Isotropic {
-    albedo: Arc<dyn Texture>,
+#[derive(Clone)]
+pub struct Isotropic<T: Texture> {
+    pub albedo: T,
 }
 
-impl Isotropic {
-    pub fn new(albedo: Arc<dyn Texture>) -> Self {
-        Self { albedo }
-    }
-
+impl Isotropic<SolidColor> {
     pub fn from_color(color: Vec3) -> Self {
         Self {
-            albedo: Arc::new(SolidColor::new(color)),
+            albedo: SolidColor::new(color),
         }
     }
 }
 
-impl Material for Isotropic {
+impl<T: Texture> Material for Isotropic<T> {
     fn scatter(&self, r_in: &Ray, hit: &HitRecord) -> Option<(Vec3, Ray)> {
         let attenuation = self.albedo.value(hit.u, hit.v, &hit.point);
         let scattered = Ray::new(hit.point, Vec3::random_in_unit_sphere(), r_in.time);

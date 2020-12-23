@@ -18,7 +18,6 @@ use image_helper::Image;
 use render::*;
 
 use std::fs::File;
-use std::sync::Arc;
 
 pub trait Clampable {
     #[inline]
@@ -67,14 +66,14 @@ fn main() -> Result<(), image::ImageError> {
     // World
     let scene =
         scenes::get_scene_from_name(&config.scene_name).expect("Cannot build unknown scene");
-    let world: Arc<dyn Hittable> = if config.avoid_bvh {
-        Arc::new(scene.world)
+    let world: Box<dyn Hittable> = if config.avoid_bvh {
+        Box::new(scene.world)
     } else {
-        Arc::new(bvh::BVHNode::from_scene(scene.world, 0.0, 1.0))
+        Box::new(bvh::BVH::from_scene(scene.world, 0.0, 1.0))
     };
 
     // Camera
-    let cam = Arc::new(Camera::new(&scene.camera_config, config.aspect_ratio));
+    let cam = Camera::new(&scene.camera_config, config.aspect_ratio);
 
     // Render
     if config.print_debug {

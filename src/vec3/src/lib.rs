@@ -8,6 +8,13 @@ use std::ops::{Index, IndexMut};
 /// This sets the error while comparing floats in Vec3s.
 const FLOAT_CMP_ERROR: f64 = 1e-8;
 
+/// Axis of the Vec3. Can be used for indexing
+pub enum Axis {
+    X = 0,
+    Y = 1,
+    Z = 2,
+}
+
 /// Three dimensional vector with opertors.
 ///
 /// It can be used for representing a point, a direction,
@@ -316,9 +323,22 @@ impl Index<usize> for Vec3 {
     }
 }
 
+impl Index<Axis> for Vec3 {
+    type Output = f64;
+    fn index(&self, index: Axis) -> &Self::Output {
+        &self.v[index as usize]
+    }
+}
+
 impl IndexMut<usize> for Vec3 {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.v[index]
+    }
+}
+
+impl IndexMut<Axis> for Vec3 {
+    fn index_mut(&mut self, index: Axis) -> &mut Self::Output {
+        &mut self.v[index as usize]
     }
 }
 

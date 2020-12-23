@@ -1,7 +1,6 @@
 use crate::aabb::{surrounding_box, AABB};
 use crate::material::Material;
 use crate::ray::Ray;
-use std::sync::Arc;
 use vec3::Vec3;
 
 pub trait Hittable: Send + Sync {
@@ -9,7 +8,7 @@ pub trait Hittable: Send + Sync {
     fn bounding_box(&self, time0: f64, time1: f64) -> Option<AABB>;
 }
 
-pub struct Unhittable {}
+pub struct Unhittable;
 impl Hittable for Unhittable {
     fn hit(&self, _r: &Ray, _t_min: f64, _t_max: f64) -> Option<HitRecord> {
         None
@@ -66,11 +65,11 @@ impl<'a> HitRecord<'a> {
     }
 }
 
-pub struct HittableList {
-    pub objects: Vec<Arc<dyn Hittable>>,
+pub struct HittableList<'a> {
+    pub objects: Vec<Box<dyn Hittable + 'a>>,
 }
 
-impl Hittable for HittableList {
+impl<'a> Hittable for HittableList<'a> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut rec: Option<HitRecord> = None;
         let mut closest_so_far = t_max;
@@ -102,18 +101,18 @@ impl Hittable for HittableList {
     }
 }
 
-pub struct Translate {
-    object: Arc<dyn Hittable>,
+pub struct Translate<H: Hittable> {
+    object: H,
     offset: Vec3,
 }
 
-impl Translate {
-    pub fn new(object: Arc<dyn Hittable>, offset: Vec3) -> Self {
+impl<H: Hittable> Translate<H> {
+    pub fn new(object: H, offset: Vec3) -> Self {
         Self { object, offset }
     }
 }
 
-impl Hittable for Translate {
+impl<H: Hittable> Hittable for Translate<H> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let moved_r = Ray::new(r.origin - self.offset, r.direction, r.time);
 
@@ -137,15 +136,15 @@ impl Hittable for Translate {
     }
 }
 
-pub struct RotateY {
-    object: Arc<dyn Hittable>,
+pub struct RotateY<H: Hittable> {
+    object: H,
     sin_theta: f64,
     cos_theta: f64,
     bbox: Option<AABB>,
 }
 
-impl RotateY {
-    pub fn new(object: Arc<dyn Hittable>, angle: f64) -> Self {
+impl<H: Hittable> RotateY<H> {
+    pub fn new(object: H, angle: f64) -> Self {
         let angle = angle.to_radians();
         let sin_theta = angle.sin();
         let cos_theta = angle.cos();
@@ -191,7 +190,7 @@ impl RotateY {
     }
 }
 
-impl Hittable for RotateY {
+impl<H: Hittable> Hittable for RotateY<H> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut origin = r.origin;
         origin[0] = self.cos_theta * r.origin[0] - self.sin_theta * r.origin[2];

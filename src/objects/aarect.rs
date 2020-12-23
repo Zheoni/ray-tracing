@@ -2,64 +2,54 @@ use super::*;
 
 const AABB_ZERO_PADDING: f64 = 0.0001;
 
-pub enum RectAxis {
-    XY,
-    XZ,
-    YZ,
+pub trait RectAxis: Send + Sync {
+    const AXIS: Axis;
+    const OTHER1: Axis;
+    const OTHER2: Axis;
 }
 
-pub struct Rect {
-    a: usize,
-    b: usize,
-    c: usize,
-    a0: f64,
-    a1: f64,
-    b0: f64,
-    b1: f64,
-    k: f64,
-    material: Arc<dyn Material>,
+#[derive(Clone)]
+pub struct Rect<A: RectAxis, M: Material> {
+    pub in_plane: A,
+    pub a0: f64,
+    pub a1: f64,
+    pub b0: f64,
+    pub b1: f64,
+    pub k: f64,
+    pub material: M,
 }
 
-impl Rect {
-    pub fn new(
-        axles: RectAxis,
-        a0: f64,
-        a1: f64,
-        b0: f64,
-        b1: f64,
-        k: f64,
-        material: Arc<dyn Material>,
-    ) -> Self {
-        use RectAxis::*;
-        let (a, b, c) = match axles {
-            XY => (0, 1, 2),
-            XZ => (0, 2, 1),
-            YZ => (1, 2, 0),
-        };
-        Self {
-            a,
-            b,
-            c,
-            a0,
-            a1,
-            b0,
-            b1,
-            k,
-            material,
-        }
-    }
+pub struct XY;
+impl RectAxis for XY {
+    const AXIS: Axis = Axis::Z;
+    const OTHER1: Axis = Axis::X;
+    const OTHER2: Axis = Axis::Y;
 }
 
-impl Hittable for Rect {
+pub struct XZ;
+impl RectAxis for XZ {
+    const AXIS: Axis = Axis::Y;
+    const OTHER1: Axis = Axis::X;
+    const OTHER2: Axis = Axis::Z;
+}
+
+pub struct YZ;
+impl RectAxis for YZ {
+    const AXIS: Axis = Axis::X;
+    const OTHER1: Axis = Axis::Y;
+    const OTHER2: Axis = Axis::Z;
+}
+
+impl<A: RectAxis, M: Material> Hittable for Rect<A, M> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let t = (self.k - r.origin[self.c]) / r.direction[self.c];
+        let t = (self.k - r.origin[A::AXIS]) / r.direction[A::AXIS];
 
         if t < t_min || t > t_max {
             return None;
         }
 
-        let a = r.origin[self.a] + t * r.direction[self.a];
-        let b = r.origin[self.b] + t * r.direction[self.b];
+        let a = r.origin[A::OTHER1] + t * r.direction[A::OTHER1];
+        let b = r.origin[A::OTHER2] + t * r.direction[A::OTHER2];
         if a < self.a0 || a > self.a1 || b < self.b0 || b > self.b1 {
             return None;
         }
@@ -68,7 +58,7 @@ impl Hittable for Rect {
         let v = (b - self.b0) / (self.b1 - self.b0);
         let outward_normal = {
             let mut v = Vec3::zero();
-            v[self.c] = 1.0;
+            v[A::AXIS] = 1.0;
             v
         };
         let point = r.at(t);
@@ -80,20 +70,20 @@ impl Hittable for Rect {
             v,
             point,
             outward_normal,
-            self.material.as_ref(),
+            &self.material,
         ))
     }
 
     fn bounding_box(&self, _time0: f64, _time1: f64) -> Option<AABB> {
         // Added padding in 3rd dimension to avoid it being 0
-        let mut v_min = [0.0; 3];
-        v_min[self.a] = self.a0;
-        v_min[self.b] = self.b0;
-        v_min[self.c] = self.k - AABB_ZERO_PADDING;
-        let mut v_max = [0.0; 3];
-        v_max[self.a] = self.a1;
-        v_max[self.b] = self.b1;
-        v_max[self.c] = self.k + AABB_ZERO_PADDING;
+        let mut v_min = Vec3::zero();
+        v_min[A::OTHER1] = self.a0;
+        v_min[A::OTHER2] = self.b0;
+        v_min[A::AXIS] = self.k - AABB_ZERO_PADDING;
+        let mut v_max = Vec3::zero();
+        v_max[A::OTHER1] = self.a1;
+        v_max[A::OTHER2] = self.b1;
+        v_max[A::AXIS] = self.k + AABB_ZERO_PADDING;
         Some(AABB {
             minimum: Vec3::from(v_min),
             maximum: Vec3::from(v_max),

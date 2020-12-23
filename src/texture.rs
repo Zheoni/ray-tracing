@@ -1,13 +1,13 @@
 use crate::Clampable;
 use image::io::Reader as ImageReader;
 use perlin_noise::PNG;
-use std::sync::Arc;
 use vec3::Vec3;
 
 pub trait Texture: Sync + Send {
     fn value(&self, u: f64, v: f64, p: &Vec3) -> Vec3;
 }
 
+#[derive(Clone)]
 pub struct SolidColor {
     color: Vec3,
 }
@@ -31,26 +31,22 @@ impl Texture for SolidColor {
     }
 }
 
-pub struct CheckerTexture {
-    odd: Arc<dyn Texture>,
-    even: Arc<dyn Texture>,
+#[derive(Clone)]
+pub struct CheckerTexture<T1: Texture, T2: Texture> {
+    odd: T1,
+    even: T2,
 }
 
-impl CheckerTexture {
-    #[allow(unused)]
-    pub fn new(odd: Arc<dyn Texture>, even: Arc<dyn Texture>) -> Self {
-        Self { odd, even }
-    }
-
+impl CheckerTexture<SolidColor, SolidColor> {
     pub fn from_colors(odd: Vec3, even: Vec3) -> Self {
         Self {
-            odd: Arc::new(SolidColor::new(odd)),
-            even: Arc::new(SolidColor::new(even)),
+            odd: SolidColor::new(odd),
+            even: SolidColor::new(even),
         }
     }
 }
 
-impl Texture for CheckerTexture {
+impl<T1: Texture, T2: Texture> Texture for CheckerTexture<T1, T2> {
     fn value(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
         let p_10 = p.scale(10.0);
         let sines = p_10.x().sin() * p_10.y().sin() * p_10.z().sin();
@@ -63,6 +59,7 @@ impl Texture for CheckerTexture {
     }
 }
 
+#[derive(Clone)]
 pub struct NoiseTexture {
     noise: PNG,
     scale: f64,
@@ -83,6 +80,7 @@ impl Texture for NoiseTexture {
     }
 }
 
+#[derive(Clone)]
 pub struct ImageTexture {
     img: image::RgbImage,
 }

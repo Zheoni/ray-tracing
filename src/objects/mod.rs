@@ -2,8 +2,7 @@ use crate::aabb::AABB;
 use crate::hittable::{HitRecord, Hittable, HittableList};
 use crate::material::Material;
 use crate::ray::Ray;
-use std::sync::Arc;
-use vec3::Vec3;
+use vec3::{Vec3, Axis};
 
 mod sphere;
 pub use sphere::*;

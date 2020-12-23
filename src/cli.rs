@@ -98,8 +98,8 @@ pub fn get_config() -> Config {
         .parse()
         .expect("Invalid ray depth");
 
-    let cpus: usize = if let Some(cpus) = args.value_of("cores") {
-        cpus.parse().expect("Invalid number of cores")
+    let cpus: usize = if let Some(cpus) = args.value_of("threads") {
+        cpus.parse().expect("Invalid number of threads")
     } else {
         num_cpus::get_physical()
     };

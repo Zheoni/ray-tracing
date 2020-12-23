@@ -1,8 +1,6 @@
 use crate::hittable::Hittable;
 use vec3::Vec3;
 
-use std::sync::Arc;
-
 /// Representation of a Ray for the raytracer.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Ray {
@@ -34,7 +32,7 @@ impl Ray {
         self.origin + t * self.direction
     }
 
-    pub fn ray_color(&self, background: &Vec3, world: Arc<dyn Hittable>, depth: u32) -> Vec3 {
+    pub fn ray_color(&self, background: &Vec3, world: &Box<dyn Hittable>, depth: u32) -> Vec3 {
         // If maximum number of rays
         if depth == 0 {
             return Vec3::zero();

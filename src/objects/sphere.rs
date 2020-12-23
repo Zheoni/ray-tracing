@@ -1,24 +1,25 @@
 use super::*;
 
-pub struct Sphere {
+#[derive(Clone)]
+pub struct Sphere<M: Material + Clone> {
     pub center: Vec3,
     pub radius: f64,
-    pub material: Arc<dyn Material>,
+    pub material: M,
 }
 
-impl Sphere {
-    pub fn get_sphere_uv(p: &Vec3) -> (f64, f64) {
-        use std::f64::consts::PI;
-        let theta = (-p.y()).acos();
-        let phi = (-p.z()).atan2(p.x()) + PI;
+#[inline]
+pub fn get_sphere_uv(p: &Vec3) -> (f64, f64) {
+    use std::f64::consts::{PI, TAU};
+    use std::ops::Neg;
+    let theta = p.y().neg().acos();
+    let phi = p.z().neg().atan2(p.x()) + PI;
 
-        let u = phi / (2.0 * PI);
-        let v = theta / PI;
-        (u, v)
-    }
+    let u = phi / (TAU);
+    let v = theta / PI;
+    (u, v)
 }
 
-impl Hittable for Sphere {
+impl<M: Material + Clone> Hittable for Sphere<M> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = r.origin - self.center;
         let a = r.direction.length_squared();
@@ -45,7 +46,7 @@ impl Hittable for Sphere {
 
         let hit_point = r.at(root);
         let outward_normal = (hit_point - self.center) / self.radius;
-        let (u, v) = Self::get_sphere_uv(&outward_normal);
+        let (u, v) = get_sphere_uv(&outward_normal);
         let record = HitRecord::new(
             &r,
             root,
@@ -53,12 +54,13 @@ impl Hittable for Sphere {
             v,
             hit_point,
             outward_normal,
-            self.material.as_ref(),
+            &self.material,
         );
 
         Some(record)
     }
 
+    #[inline]
     fn bounding_box(&self, _time0: f64, _time1: f64) -> Option<AABB> {
         Some(AABB {
             minimum: self.center - Vec3::splat(self.radius),
