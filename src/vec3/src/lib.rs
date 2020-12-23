@@ -4,6 +4,7 @@ use std::convert::From;
 use std::ops::Deref;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::ops::{Index, IndexMut};
+use std::iter::FromIterator;
 
 /// This sets the error while comparing floats in Vec3s.
 const FLOAT_CMP_ERROR: f64 = 1e-8;
@@ -51,6 +52,7 @@ impl Vec3 {
 
     /// Creates a new random vector with coords in range \[0.0, 1.0\]
     #[must_use]
+    #[inline]
     pub fn random() -> Self {
         Vec3 {
             v: [rand::random(), rand::random(), rand::random()],
@@ -81,6 +83,7 @@ impl Vec3 {
     }
 
     #[must_use]
+    #[inline]
     pub fn random_unit_vector() -> Self {
         Self::random_in_unit_sphere().unit_vector()
     }
@@ -113,21 +116,25 @@ impl Vec3 {
     }
 
     /// X coord getter
+    #[inline]
     pub fn x(&self) -> f64 {
         self.v[0]
     }
 
     /// Y coord getter
+    #[inline]
     pub fn y(&self) -> f64 {
         self.v[1]
     }
 
     /// Z coord getter
+    #[inline]
     pub fn z(&self) -> f64 {
         self.v[2]
     }
 
     /// Calculates the length of the vector
+    #[inline]
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }
@@ -135,6 +142,7 @@ impl Vec3 {
     /// Calculates the squared lenght of the vetor.
     ///
     /// This is faster than only the [Vec3.length].
+    #[inline]
     pub fn length_squared(&self) -> f64 {
         let v = &self.v;
         v[0] * v[0] + v[1] * v[1] + v[2] * v[2]
@@ -156,6 +164,7 @@ impl Vec3 {
     }
 
     /// Calculates the dot product of two vectors.
+    #[inline]
     pub fn dot(&self, other: &Self) -> f64 {
         self.v[0] * other.v[0] + self.v[1] * other.v[1] + self.v[2] * other.v[2]
     }
@@ -188,6 +197,48 @@ impl Vec3 {
     pub fn unit_vector(mut self) -> Self {
         self.unit_vector_mut();
         self
+    }
+
+    #[inline]
+    pub fn iter(&self) -> std::slice::Iter<f64> {
+        self.v.iter()
+    }
+
+    #[inline]
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<f64> {
+        self.v.iter_mut()
+    }
+
+    #[inline]
+    pub fn reduce(self, f: impl Fn(f64, f64) -> f64) -> f64 {
+        f(f(self[0], self[1]), self[2])
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn map(self, mut f: impl FnMut(f64) -> f64) -> Self {
+        Vec3::new(f(self[0]), f(self[1]), f(self[2]))
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn zip_with(self, other: Vec3, mut f: impl FnMut(f64, f64) -> f64) -> Self {
+        Vec3::new(f(self[0], other[0]), f(self[1], other[1]), f(self[2], other[2]))
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn zip_with3(
+        self,
+        other1: Vec3,
+        other2: Vec3,
+        mut f: impl FnMut(f64, f64, f64) -> f64,
+    ) -> Self {
+        Vec3::new(
+            f(self[0], other1[0], other2[0]),
+            f(self[1], other1[1], other2[1]),
+            f(self[2], other1[2], other2[2]),
+        )
     }
 }
 
@@ -318,6 +369,7 @@ impl PartialEq for Vec3 {
 
 impl Index<usize> for Vec3 {
     type Output = f64;
+    #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         &self.v[index]
     }
@@ -325,18 +377,21 @@ impl Index<usize> for Vec3 {
 
 impl Index<Axis> for Vec3 {
     type Output = f64;
+    #[inline]
     fn index(&self, index: Axis) -> &Self::Output {
         &self.v[index as usize]
     }
 }
 
 impl IndexMut<usize> for Vec3 {
+    #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.v[index]
     }
 }
 
 impl IndexMut<Axis> for Vec3 {
+    #[inline]
     fn index_mut(&mut self, index: Axis) -> &mut Self::Output {
         &mut self.v[index as usize]
     }
@@ -353,6 +408,19 @@ impl Deref for Vec3 {
 impl From<[f64; 3]> for Vec3 {
     fn from(v: [f64; 3]) -> Self {
         Self { v }
+    }
+}
+
+impl FromIterator<f64> for Vec3 {
+    fn from_iter<T: IntoIterator<Item = f64>>(iter: T) -> Self {
+        let mut iter = iter.into_iter();
+        Self {
+            v: [
+                iter.next().unwrap(),
+                iter.next().unwrap(),
+                iter.next().unwrap(),
+            ]
+        }
     }
 }
 

@@ -17,62 +17,19 @@ impl Default for AABB {
 }
 
 impl AABB {
-    // //default
-    // pub fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> bool {
-    //     for a in 0..3 {
-    //         let with_min = (self.minimum[a] - r.origin[a]) / r.direction[a];
-    //         let with_max = (self.maximum[a] - r.origin[a]) / r.direction[a];
-    //         let t0 = f64::min(with_min, with_max);
-    //         let t1 = f64::max(with_min, with_max);
-    //         let t_min = t_min.max(t0);
-    //         let t_max = t_max.min(t1);
-    //         if t_max <= t_min {
-    //             return false;
-    //         }
-    //     }
-    //     true
-    // }
-
-    // //pixar
-    // pub fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> bool {
-    //     for a in 0..3 {
-    //         let invD = r.direction[a].recip();
-    //         let (t0, t1) = if invD >= 0.0 {
-    //             let t0 = (self.minimum[a] - r.origin[a]) * invD;
-    //             let t1 = (self.maximum[a] - r.origin[a]) * invD;
-    //             (t0, t1)
-    //         } else {
-    //             let t0 = (self.minimum[a] - r.origin[a]) * invD;
-    //             let t1 = (self.maximum[a] - r.origin[a]) * invD;
-    //             (t0, t1)
-    //         };
-
-    //         let t_min = t_min.max(t0);
-    //         let t_max = t_max.min(t1);
-    //         if t_max <= t_min {
-    //             return false;
-    //         }
-    //     }
-    //     true
-    // }
-
     pub fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> bool {
-        for a in 0..3 {
-            let inv_d = r.direction[a].recip();
-            let mut t0 = (self.minimum[a] - r.origin[a]) * inv_d;
-            let mut t1 = (self.maximum[a] - r.origin[a]) * inv_d;
+        let inv_d = r.direction.map(f64::recip);
+        let t0 = (self.minimum - r.origin) * inv_d;
+        let t1 = (self.maximum - r.origin) * inv_d;
 
-            if inv_d < 0.0 {
-                std::mem::swap(&mut t0, &mut t1);
-            }
+        let (t0, t1) = (
+            inv_d.zip_with3(t0, t1, |x, a, b| if x < 0.0 { b } else { a }),
+            inv_d.zip_with3(t0, t1, |x, a, b| if x < 0.0 { a } else { b }),
+        );
 
-            let t_min = t_min.max(t0);
-            let t_max = t_max.min(t1);
-            if t_max <= t_min {
-                return false;
-            }
-        }
-        true
+        let start = t_min.max(t0.reduce(f64::max));
+        let end = t_max.min(t1.reduce(f64::min));
+        end > start
     }
 }
 

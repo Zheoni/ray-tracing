@@ -488,11 +488,11 @@ fn cornell_box() -> Scene {
     }));
     objects.push(Box::new(Rect {
         in_plane: XZ,
-        a0: 3.0,
-        a1: 3.0,
-        b0: 7.0,
-        b1: 2.0,
-        k: 4.0,
+        a0: 213.0,
+        a1: 343.0,
+        b0: 227.0,
+        b1: 332.0,
+        k: 554.0,
         material: light,
     }));
     objects.push(Box::new(Rect {

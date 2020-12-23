@@ -5,7 +5,6 @@ use crate::Config;
 use image::RgbImage;
 use rand::prelude::*;
 use std::sync::mpsc;
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 use vec3::Vec3;
 
@@ -65,8 +64,6 @@ pub fn render(config: RenderConfig) -> (RgbImage, Duration) {
         }
         pb.finish();
     });
-
-    let config = Arc::new(config);
 
     let start_instant = Instant::now();
     // gives ownership of tx, therefore when function ends, tx is disconnected
