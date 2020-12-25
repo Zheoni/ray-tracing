@@ -65,11 +65,11 @@ impl<'a> HitRecord<'a> {
     }
 }
 
-pub struct HittableList<'a> {
-    pub objects: Vec<Box<dyn Hittable + 'a>>,
+pub struct HittableList {
+    pub objects: Vec<Box<dyn Hittable>>,
 }
 
-impl<'a> Hittable for HittableList<'a> {
+impl Hittable for HittableList {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut rec: Option<HitRecord> = None;
         let mut closest_so_far = t_max;

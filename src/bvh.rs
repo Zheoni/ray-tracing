@@ -12,7 +12,10 @@ pub struct BVH<'a> {
 }
 
 pub enum BVHNode<'a> {
-    Node { left: Box<BVH<'a>>, right: Box<BVH<'a>> },
+    Node {
+        left: Box<BVH<'a>>,
+        right: Box<BVH<'a>>,
+    },
     Leaf(Box<dyn Hittable + 'a>),
 }
 
@@ -24,18 +27,22 @@ impl<'a> BVH<'a> {
 
         match objects.len() {
             0 => Self {
-                node: Leaf(Box::new(Unhittable{})),
-                b_box: AABB::default()
+                node: Leaf(Box::new(Unhittable {})),
+                b_box: AABB::default(),
             },
             1 => Self {
-                b_box: objects[0].bounding_box(time0, time1).unwrap_or(AABB::default()),
+                b_box: objects[0].bounding_box(time0, time1).unwrap_or_default(),
                 node: Leaf(objects.pop().unwrap()),
             },
             _ => {
                 objects.sort_by(|a, b| box_compare(a.borrow(), b.borrow(), axis));
                 let mid = objects.len() / 2;
 
-                let right = Box::new(Self::build_tree(objects.drain(mid..).collect(), time0, time1));
+                let right = Box::new(Self::build_tree(
+                    objects.drain(mid..).collect(),
+                    time0,
+                    time1,
+                ));
                 let left = Box::new(Self::build_tree(objects, time0, time1));
 
                 let box_left = left.bounding_box(time0, time1);
@@ -50,12 +57,12 @@ impl<'a> BVH<'a> {
                 Self {
                     node: Node { left, right },
                     b_box,
-                }    
+                }
             }
         }
     }
 
-    pub fn from_scene(scene: HittableList<'a>, time0: f64, time1: f64) -> Self {
+    pub fn from_scene(scene: HittableList, time0: f64, time1: f64) -> Self {
         Self::build_tree(scene.objects, time0, time1)
     }
 }

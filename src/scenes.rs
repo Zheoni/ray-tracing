@@ -9,7 +9,7 @@ use vec3::Vec3;
 use rand::Rng;
 
 pub struct Scene {
-    pub world: HittableList<'static>,
+    pub world: HittableList,
     pub camera_config: CameraConfig,
     pub background_color: Vec3,
 }
@@ -244,9 +244,7 @@ fn random_spheres_checker() -> Scene {
     objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, -1000.0, 0.0),
         radius: 1000.0,
-        material: Lambertian {
-            albedo: cheker,
-        },
+        material: Lambertian { albedo: cheker },
     }));
 
     for a in -11..=11 {
@@ -335,13 +333,8 @@ fn aperture_0() -> CameraConfig {
 fn checker_spheres() -> Scene {
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
-    let checker = CheckerTexture::from_colors(
-        Vec3::new(0.2, 0.3, 0.1),
-        Vec3::new(0.9, 0.9, 0.9),
-    );
-    let material = Lambertian {
-        albedo: checker,
-    };
+    let checker = CheckerTexture::from_colors(Vec3::new(0.2, 0.3, 0.1), Vec3::new(0.9, 0.9, 0.9));
+    let material = Lambertian { albedo: checker };
     objects.push(Box::new(Sphere {
         center: Vec3::new(0.0, -10.0, 0.0),
         radius: 10.0,
@@ -524,21 +517,13 @@ fn cornell_box() -> Scene {
     }));
 
     // Blocks
-    let box1 = Block::new(
-        Vec3::zero(),
-        Vec3::new(165.0, 330.0, 165.0),
-        white.clone(),
-    );
+    let box1 = Block::new(Vec3::zero(), Vec3::new(165.0, 330.0, 165.0), white.clone());
     let box1 = RotateY::new(box1, 15.0);
     let box1 = Translate::new(box1, Vec3::new(265.0, 0.0, 295.0));
     let box1 = Box::new(box1);
     objects.push(box1);
 
-    let box2 = Block::new(
-        Vec3::zero(),
-        Vec3::new(165.0, 165.0, 165.0),
-        white,
-    );
+    let box2 = Block::new(Vec3::zero(), Vec3::new(165.0, 165.0, 165.0), white);
     let box2 = RotateY::new(box2, -18.0);
     let box2 = Translate::new(box2, Vec3::new(130.0, 0.0, 65.0));
     let box2 = Box::new(box2);
@@ -568,19 +553,11 @@ fn cornell_smoke() -> Scene {
 
     let white = Lambertian::from_color(Vec3::splat(0.73));
 
-    let box1 = Block::new(
-        Vec3::zero(),
-        Vec3::new(165.0, 330.0, 165.0),
-        white.clone(),
-    );
+    let box1 = Block::new(Vec3::zero(), Vec3::new(165.0, 330.0, 165.0), white.clone());
     let box1 = RotateY::new(box1, 15.0);
     let box1 = Translate::new(box1, Vec3::new(265.0, 0.0, 295.0));
 
-    let box2 = Block::new(
-        Vec3::zero(),
-        Vec3::new(165.0, 165.0, 165.0),
-        white,
-    );
+    let box2 = Block::new(Vec3::zero(), Vec3::new(165.0, 165.0, 165.0), white);
     let box2 = RotateY::new(box2, -18.0);
     let box2 = Translate::new(box2, Vec3::new(130.0, 0.0, 65.0));
 
@@ -631,7 +608,7 @@ fn final_scene() -> Scene {
     objects.push(Box::new(Rect {
         in_plane: XZ,
         a0: 123.0,
-        a1:423.0,
+        a1: 423.0,
         b0: 147.0,
         b1: 412.0,
         k: 445.0,
@@ -716,10 +693,7 @@ fn final_scene() -> Scene {
     }
 
     objects.push(Box::new(Translate::new(
-        RotateY::new(
-            BVH::build_tree(boxes, 0.0, 1.0),
-            15.0,
-        ),
+        RotateY::new(BVH::build_tree(boxes, 0.0, 1.0), 15.0),
         Vec3::new(-100.0, 270.0, 395.0),
     )));
 

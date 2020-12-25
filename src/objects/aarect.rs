@@ -85,8 +85,8 @@ impl<A: RectAxis, M: Material> Hittable for Rect<A, M> {
         v_max[A::OTHER2] = self.b1;
         v_max[A::AXIS] = self.k + AABB_ZERO_PADDING;
         Some(AABB {
-            minimum: Vec3::from(v_min),
-            maximum: Vec3::from(v_max),
+            minimum: v_min,
+            maximum: v_max,
         })
     }
 }

@@ -32,7 +32,7 @@ impl Ray {
         self.origin + t * self.direction
     }
 
-    pub fn ray_color(&self, background: &Vec3, world: &Box<dyn Hittable>, depth: u32) -> Vec3 {
+    pub fn ray_color(&self, background: &Vec3, world: &dyn Hittable, depth: u32) -> Vec3 {
         // If maximum number of rays
         if depth == 0 {
             return Vec3::zero();

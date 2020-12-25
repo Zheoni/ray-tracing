@@ -1,15 +1,14 @@
 use super::*;
 
-pub struct Block<'a> {
+pub struct Block {
     pub p0: Vec3,
     pub p1: Vec3,
-    sides: HittableList<'a>,
+    sides: HittableList,
 }
 
-impl<'a> Block<'a> {
-    pub fn new<M: 'a + Material + Clone>(p0: Vec3, p1: Vec3, material: M) -> Self
-    {
-        let mut side_rectangles: Vec<Box<dyn Hittable + 'a>> = Vec::new();
+impl Block {
+    pub fn new<M: 'static + Material + Clone>(p0: Vec3, p1: Vec3, material: M) -> Self {
+        let mut side_rectangles: Vec<Box<dyn Hittable>> = Vec::new();
 
         side_rectangles.push(Box::new(Rect {
             in_plane: XY,
@@ -18,11 +17,11 @@ impl<'a> Block<'a> {
             b0: p0.y(),
             b1: p1.y(),
             k: p1.z(),
-            material: material.clone()
+            material: material.clone(),
         }));
         side_rectangles.push(Box::new(Rect {
             in_plane: XY,
-            a0:p0.x(),
+            a0: p0.x(),
             a1: p1.x(),
             b0: p0.y(),
             b1: p1.y(),
@@ -32,7 +31,7 @@ impl<'a> Block<'a> {
 
         side_rectangles.push(Box::new(Rect {
             in_plane: XZ,
-            a0:p0.x(),
+            a0: p0.x(),
             a1: p1.x(),
             b0: p0.z(),
             b1: p1.z(),
@@ -41,7 +40,7 @@ impl<'a> Block<'a> {
         }));
         side_rectangles.push(Box::new(Rect {
             in_plane: XZ,
-            a0:p0.x(),
+            a0: p0.x(),
             a1: p1.x(),
             b0: p0.z(),
             b1: p1.z(),
@@ -51,7 +50,7 @@ impl<'a> Block<'a> {
 
         side_rectangles.push(Box::new(Rect {
             in_plane: YZ,
-            a0:p0.y(),
+            a0: p0.y(),
             a1: p1.y(),
             b0: p0.z(),
             b1: p1.z(),
@@ -60,7 +59,7 @@ impl<'a> Block<'a> {
         }));
         side_rectangles.push(Box::new(Rect {
             in_plane: YZ,
-            a0:p0.y(),
+            a0: p0.y(),
             a1: p1.y(),
             b0: p0.z(),
             b1: p1.z(),
@@ -78,7 +77,7 @@ impl<'a> Block<'a> {
     }
 }
 
-impl<'a> Hittable for Block<'a> {
+impl Hittable for Block {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         self.sides.hit(r, t_min, t_max)
     }

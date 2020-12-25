@@ -6,7 +6,8 @@ use vec3::Vec3;
 
 pub trait Material: Send + Sync {
     fn scatter(&self, r_in: &Ray, hit: &HitRecord) -> Option<(Vec3, Ray)>;
-    fn emitted(&self, _u: f64, _v: f64, _p: &Vec3) -> Vec3 {
+    #[allow(unused)]
+    fn emitted(&self, u: f64, v: f64, p: &Vec3) -> Vec3 {
         Vec3::zero()
     }
 }

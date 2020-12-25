@@ -1,8 +1,8 @@
 use crate::aabb::AABB;
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::{Isotropic, Material};
-use crate::texture::SolidColor;
 use crate::ray::Ray;
+use crate::texture::SolidColor;
 use crate::texture::Texture;
 use vec3::Vec3;
 

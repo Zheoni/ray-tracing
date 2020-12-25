@@ -47,15 +47,7 @@ impl<M: Material + Clone> Hittable for Sphere<M> {
         let hit_point = r.at(root);
         let outward_normal = (hit_point - self.center) / self.radius;
         let (u, v) = get_sphere_uv(&outward_normal);
-        let record = HitRecord::new(
-            &r,
-            root,
-            u,
-            v,
-            hit_point,
-            outward_normal,
-            &self.material,
-        );
+        let record = HitRecord::new(&r, root, u, v, hit_point, outward_normal, &self.material);
 
         Some(record)
     }

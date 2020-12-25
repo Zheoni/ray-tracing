@@ -1,10 +1,10 @@
 use rand::Rng;
 use std::cmp::PartialEq;
 use std::convert::From;
+use std::iter::FromIterator;
 use std::ops::Deref;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::ops::{Index, IndexMut};
-use std::iter::FromIterator;
 
 /// This sets the error while comparing floats in Vec3s.
 const FLOAT_CMP_ERROR: f64 = 1e-8;
@@ -28,12 +28,14 @@ pub struct Vec3 {
 impl Vec3 {
     /// Creates a new vector with the given coords.
     #[must_use]
+    #[inline]
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { v: [x, y, z] }
     }
 
     /// Creates a new vector with all coords to `v`
     #[must_use]
+    #[inline]
     pub fn splat(v: f64) -> Self {
         Vec3 { v: [v; 3] }
     }
@@ -149,6 +151,7 @@ impl Vec3 {
     }
 
     /// Scales the vector in place multiplying every coord by `factor`.
+    #[inline]
     pub fn scale_mut(&mut self, factor: f64) -> &mut Self {
         self.v[0] *= factor;
         self.v[1] *= factor;
@@ -223,7 +226,11 @@ impl Vec3 {
     #[must_use]
     #[inline]
     pub fn zip_with(self, other: Vec3, mut f: impl FnMut(f64, f64) -> f64) -> Self {
-        Vec3::new(f(self[0], other[0]), f(self[1], other[1]), f(self[2], other[2]))
+        Vec3::new(
+            f(self[0], other[0]),
+            f(self[1], other[1]),
+            f(self[2], other[2]),
+        )
     }
 
     #[must_use]
@@ -243,6 +250,7 @@ impl Vec3 {
 }
 
 impl AddAssign for Vec3 {
+    #[inline]
     fn add_assign(&mut self, other: Self) {
         self.v[0] += other.v[0];
         self.v[1] += other.v[1];
@@ -253,6 +261,7 @@ impl AddAssign for Vec3 {
 impl Add for Vec3 {
     type Output = Self;
 
+    #[inline]
     fn add(mut self, other: Self) -> Self {
         self += other;
         self
@@ -260,6 +269,7 @@ impl Add for Vec3 {
 }
 
 impl SubAssign for Vec3 {
+    #[inline]
     fn sub_assign(&mut self, other: Self) {
         self.v[0] -= other.v[0];
         self.v[1] -= other.v[1];
@@ -270,6 +280,7 @@ impl SubAssign for Vec3 {
 impl Sub for Vec3 {
     type Output = Self;
 
+    #[inline]
     fn sub(mut self, other: Self) -> Self {
         self -= other;
         self
@@ -279,17 +290,18 @@ impl Sub for Vec3 {
 impl Neg for Vec3 {
     type Output = Self;
 
-    fn neg(self) -> Self {
-        let mut v = [0f64; 3];
-        v[0] = -self.v[0];
-        v[1] = -self.v[1];
-        v[2] = -self.v[2];
-        Self { v }
+    #[inline]
+    fn neg(mut self) -> Self {
+        self.v[0] = -self.v[0];
+        self.v[1] = -self.v[1];
+        self.v[2] = -self.v[2];
+        self
     }
 }
 
 impl MulAssign<f64> for Vec3 {
     /// Overloaded operator for [Vec3.scale_mut]
+    #[inline]
     fn mul_assign(&mut self, other: f64) {
         self.scale_mut(other);
     }
@@ -299,6 +311,7 @@ impl Mul<f64> for Vec3 {
     type Output = Self;
 
     /// Overloaded operator for [Vec3.scale]
+    #[inline]
     fn mul(mut self, other: f64) -> Self {
         self *= other;
         self
@@ -309,6 +322,7 @@ impl Mul<Vec3> for f64 {
     type Output = Vec3;
 
     /// Overloaded operator for [Vec3.scale]
+    #[inline]
     fn mul(self, other: Vec3) -> Self::Output {
         other * self
     }
@@ -316,6 +330,7 @@ impl Mul<Vec3> for f64 {
 
 impl MulAssign<Vec3> for Vec3 {
     /// Multiplies elements one to one in place
+    #[inline]
     fn mul_assign(&mut self, other: Vec3) {
         self.v[0] *= other.v[0];
         self.v[1] *= other.v[1];
@@ -327,6 +342,7 @@ impl Mul<Vec3> for Vec3 {
     type Output = Vec3;
 
     /// Multiplies elements one to one
+    #[inline]
     fn mul(mut self, other: Vec3) -> Self::Output {
         self *= other;
         self
@@ -335,8 +351,9 @@ impl Mul<Vec3> for Vec3 {
 
 impl DivAssign<f64> for Vec3 {
     /// Overloaded operator for [Vec3.scale_mut] by `1.0 / factor`
+    #[inline]
     fn div_assign(&mut self, other: f64) {
-        self.scale_mut(1.0f64 / other);
+        self.scale_mut(other.recip());
     }
 }
 
@@ -344,6 +361,7 @@ impl Div<f64> for Vec3 {
     type Output = Self;
 
     /// Overloaded operator for [Vec3.scale] by `1.0 / factor`
+    #[inline]
     fn div(mut self, other: f64) -> Self {
         self /= other;
         self
@@ -354,6 +372,7 @@ impl Div<Vec3> for f64 {
     type Output = Vec3;
 
     /// Overloaded operator for [Vec3.scale] by `1.0 / factor`
+    #[inline]
     fn div(self, other: Vec3) -> Self::Output {
         other / self
     }
@@ -419,7 +438,7 @@ impl FromIterator<f64> for Vec3 {
                 iter.next().unwrap(),
                 iter.next().unwrap(),
                 iter.next().unwrap(),
-            ]
+            ],
         }
     }
 }
