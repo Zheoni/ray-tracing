@@ -1,3 +1,5 @@
+#![allow(clippy::many_single_char_names)]
+
 use vec3::Vec3;
 
 const POINT_COUNT: usize = 256;
@@ -29,6 +31,7 @@ impl PerlinNoiseGenerator {
         let k = p[2].floor() as isize;
         let mut c = [[[Vec3::zero(); 2]; 2]; 2];
 
+        #[allow(clippy::needless_range_loop)]
         for di in 0..2 {
             for dj in 0..2 {
                 for dk in 0..2 {
@@ -103,6 +106,7 @@ impl PerlinNoiseGenerator {
         let ww = w * w * (3.0 - 2.0 * w);
 
         let mut accum = 0.0;
+        #[allow(clippy::needless_range_loop)]
         for i in 0..2 {
             for j in 0..2 {
                 for k in 0..2 {

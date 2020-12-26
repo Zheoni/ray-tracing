@@ -1,3 +1,5 @@
+#![allow(clippy::many_single_char_names)]
+
 mod aabb;
 mod bvh;
 mod camera;

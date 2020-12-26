@@ -1,12 +1,11 @@
 use crate::camera::Camera;
 use crate::hittable::Hittable;
 use crate::image_helper::Image;
-use crate::Config;
 use crate::ray::Ray;
+use crate::Config;
 use image::RgbImage;
 use rand::prelude::*;
 use std::sync::mpsc;
-use std::sync::Arc;
 use std::time::{Duration, Instant};
 use vec3::Vec3;
 
@@ -76,8 +75,6 @@ pub fn render(
         pb.finish();
     });
 
-    let world = Arc::new(world);
-
     let start_instant = Instant::now();
     // gives ownership of tx, therefore when function ends, tx is disconnected
     let image = RgbImage::par_compute(width, height, cpus, tx, move |i, j| {
@@ -87,7 +84,7 @@ pub fn render(
                 let u = (i as f64 + rng.gen::<f64>()) / width as f64;
                 let v = (j as f64 + rng.gen::<f64>()) / height as f64;
                 let r = camera.get_ray(u, v);
-                ray_color(r, &background, &**world, max_depth)
+                ray_color(r, &background, world.as_ref(), max_depth)
             })
             .sum();
         pixel / spp as f64

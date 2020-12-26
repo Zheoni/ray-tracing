@@ -12,10 +12,7 @@ pub struct BVH {
 }
 
 pub enum BVHNode {
-    Node {
-        left: Box<BVH>,
-        right: Box<BVH>,
-    },
+    Node { left: Box<BVH>, right: Box<BVH> },
     Leaf(Box<dyn Hittable>),
 }
 
