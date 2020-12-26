@@ -3,8 +3,11 @@ name = "ray-tracing"
 version = "0.1.0"
 authors = ["Zheoni <zheoni@outlook.es>"]
 edition = "2018"
-
+publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+recursive-tracer = []
 
 [dependencies]
 rand = "0.7.3"

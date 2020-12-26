@@ -2,6 +2,7 @@ use crate::camera::Camera;
 use crate::hittable::Hittable;
 use crate::image_helper::Image;
 use crate::Config;
+use crate::ray::Ray;
 use image::RgbImage;
 use rand::prelude::*;
 use std::sync::mpsc;
@@ -86,7 +87,7 @@ pub fn render(
                 let u = (i as f64 + rng.gen::<f64>()) / width as f64;
                 let v = (j as f64 + rng.gen::<f64>()) / height as f64;
                 let r = camera.get_ray(u, v);
-                r.ray_color(&background, &**world, max_depth)
+                ray_color(r, &background, &**world, max_depth)
             })
             .sum();
         pixel / spp as f64
@@ -96,4 +97,68 @@ pub fn render(
     progress_thread.join().expect("Progress thread panicked");
 
     (image, elapsed)
+}
+
+#[cfg(feature = "recursive-tracer")]
+pub fn ray_color(r: Ray, background: &Vec3, world: &dyn Hittable, depth: u32) -> Vec3 {
+    // If maximum number of rays
+    if depth == 0 {
+        return Vec3::zero();
+    }
+
+    // If hit with some object. The min hit distance is not 0 because
+    // of course float precission. Not every ray will match exactly with 0.0
+    if let Some(hit) = world.hit(&r, 0.001, f64::INFINITY) {
+        // if hits something
+
+        // Calculate the light emitted
+        let emitted = hit.material.emitted(hit.u, hit.v, &hit.point);
+
+        if let Some((attenuation, scattered)) = hit.material.scatter(&r, &hit) {
+            // if material scatters
+            emitted + attenuation * ray_color(scattered, background, world, depth - 1)
+        } else {
+            // if it not, only emits
+            emitted
+        }
+    } else {
+        // if hits nothing, the background is visible
+        *background
+    }
+}
+
+#[cfg(not(feature = "recursive-tracer"))]
+fn ray_color(mut ray: Ray, background: &Vec3, world: &dyn Hittable, max_bounces: u32) -> Vec3 {
+    // Light accumulated in the in the ray after all the interactions
+    let mut accum = Vec3::zero();
+    // Total attenuation
+    let mut strength = Vec3::one();
+
+    let mut bounces = 0;
+
+    // If hit with some object. The min hit distance is not 0 because
+    // of float precission. Not every ray will match exactly with 0.0
+    while let Some(hit) = world.hit(&ray, 0.001, f64::INFINITY) {
+        // Add the light emmited in the hit
+        accum += strength * hit.material.emitted(hit.u, hit.v, &hit.point);
+
+        // if material scatters
+        if let Some((attenuation, scattered)) = hit.material.scatter(&ray, &hit) {
+            // change current ray
+            ray = scattered;
+            // update ray strength
+            strength *= attenuation;
+        } else {
+            // if the ray is absorbed, no more calculations needed
+            return accum;
+        }
+
+        if bounces == max_bounces {
+            return accum;
+        }
+
+        bounces += 1;
+    }
+
+    *background
 }

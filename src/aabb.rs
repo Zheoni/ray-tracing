@@ -1,19 +1,10 @@
 use crate::ray::Ray;
 use vec3::Vec3;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct AABB {
     pub minimum: Vec3,
     pub maximum: Vec3,
-}
-
-impl Default for AABB {
-    fn default() -> Self {
-        Self {
-            minimum: Vec3::zero(),
-            maximum: Vec3::zero(),
-        }
-    }
 }
 
 impl AABB {

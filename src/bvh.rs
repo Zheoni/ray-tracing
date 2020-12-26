@@ -6,21 +6,21 @@ use std::cmp::Ordering;
 
 use rand::Rng;
 
-pub struct BVH<'a> {
-    node: BVHNode<'a>,
+pub struct BVH {
+    node: BVHNode,
     b_box: AABB,
 }
 
-pub enum BVHNode<'a> {
+pub enum BVHNode {
     Node {
-        left: Box<BVH<'a>>,
-        right: Box<BVH<'a>>,
+        left: Box<BVH>,
+        right: Box<BVH>,
     },
-    Leaf(Box<dyn Hittable + 'a>),
+    Leaf(Box<dyn Hittable>),
 }
 
-impl<'a> BVH<'a> {
-    pub fn build_tree(mut objects: Vec<Box<dyn Hittable + 'a>>, time0: f64, time1: f64) -> Self {
+impl BVH {
+    pub fn build_tree(mut objects: Vec<Box<dyn Hittable>>, time0: f64, time1: f64) -> Self {
         use BVHNode::*;
         let axis: usize = rand::thread_rng().gen_range(0, 3);
         assert!(axis < 3);
@@ -82,7 +82,7 @@ fn box_compare(a: &dyn Hittable, b: &dyn Hittable, axis: usize) -> Ordering {
     }
 }
 
-impl<'a> Hittable for BVH<'a> {
+impl Hittable for BVH {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         use BVHNode::*;
         // If if does not hit the bounding box, return instantly
