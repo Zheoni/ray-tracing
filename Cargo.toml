@@ -17,8 +17,8 @@ pbr = "1.0.3"
 image = "0.23.12"
 
 # My local crates
-vec3 = { path = "src/vec3" }
-perlin_noise = { path = "src/perlin_noise" }
+vec3 = { path = "vec3" }
+perlin_noise = { path = "perlin_noise" }
 
 [workspace]
-members = ["src/vec3/", "src/perlin_noise/"]
+members = ["vec3/", "perlin_noise/"]

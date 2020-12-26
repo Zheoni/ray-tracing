@@ -2,7 +2,6 @@ use crate::camera::Camera;
 use crate::hittable::Hittable;
 use crate::image_helper::Image;
 use crate::ray::Ray;
-use crate::Config;
 use image::RgbImage;
 use rand::prelude::*;
 use std::sync::mpsc;
@@ -10,36 +9,15 @@ use std::time::{Duration, Instant};
 use vec3::Vec3;
 
 pub struct RenderConfig {
-    world: Box<dyn Hittable>,
-    camera: Camera,
-    background_color: Vec3,
-    image_width: usize,
-    image_height: usize,
-    samples_per_pixel: usize,
-    max_depth: u32,
-    cpus: usize,
-    print_debug: bool,
-}
-
-impl RenderConfig {
-    pub fn from(
-        config: &Config,
-        background_color: Vec3,
-        world: Box<dyn Hittable>,
-        camera: Camera,
-    ) -> Self {
-        Self {
-            world,
-            camera,
-            background_color,
-            image_width: (config.image_height as f64 * config.aspect_ratio).floor() as usize,
-            image_height: config.image_height,
-            samples_per_pixel: config.samples_per_pixel,
-            max_depth: config.max_depth,
-            cpus: config.cpus,
-            print_debug: config.print_debug,
-        }
-    }
+    pub world: Box<dyn Hittable>,
+    pub camera: Camera,
+    pub background_color: Vec3,
+    pub image_width: usize,
+    pub image_height: usize,
+    pub samples_per_pixel: usize,
+    pub max_bounces: u32,
+    pub threads: usize,
+    pub print_debug: bool,
 }
 
 pub fn render(
@@ -48,18 +26,18 @@ pub fn render(
         image_height: height,
         samples_per_pixel: spp,
         world,
-        max_depth,
+        max_bounces,
         camera,
         background_color: background,
         print_debug,
-        cpus,
+        threads,
     }: RenderConfig,
 ) -> (RgbImage, Duration) {
     if print_debug {
         eprintln!("Resolution: {}x{}", width, height);
     }
 
-    eprintln!("Rendering with {} cores...", cpus);
+    eprintln!("Rendering with {} threads...", threads);
 
     let (tx, rx) = mpsc::channel::<bool>();
 
@@ -77,14 +55,14 @@ pub fn render(
 
     let start_instant = Instant::now();
     // gives ownership of tx, therefore when function ends, tx is disconnected
-    let image = RgbImage::par_compute(width, height, cpus, tx, move |i, j| {
+    let image = RgbImage::par_compute(width, height, threads, tx, move |i, j| {
         let pixel: Vec3 = (0..spp)
             .map(|_| {
                 let mut rng = thread_rng();
                 let u = (i as f64 + rng.gen::<f64>()) / width as f64;
                 let v = (j as f64 + rng.gen::<f64>()) / height as f64;
                 let r = camera.get_ray(u, v);
-                ray_color(r, &background, world.as_ref(), max_depth)
+                ray_color(r, &background, world.as_ref(), max_bounces)
             })
             .sum();
         pixel / spp as f64
