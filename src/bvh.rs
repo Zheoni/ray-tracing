@@ -19,7 +19,7 @@ pub enum BVHNode {
 impl BVH {
     pub fn build_tree(mut objects: Vec<Box<dyn Hittable>>, time0: f64, time1: f64) -> Self {
         use BVHNode::*;
-        let axis: usize = rand::thread_rng().gen_range(0, 3);
+        let axis: usize = rand::thread_rng().gen_range(0..3);
         assert!(axis < 3);
 
         match objects.len() {

@@ -2,7 +2,7 @@ use crate::Clampable;
 use image::Pixel;
 use std::io::{Error, Write};
 use std::ops::Mul;
-use std::sync::Arc;
+use std::sync::{Arc, mpsc};
 use vec3::Vec3;
 
 #[inline]
@@ -16,7 +16,7 @@ pub trait Image {
         width: usize,
         height: usize,
         threads: usize,
-        tx: std::sync::mpsc::Sender<bool>,
+        tx: mpsc::Sender<bool>,
         f: impl Fn(usize, usize) -> Vec3 + Sync + Send + 'static,
     ) -> Self;
     fn write_as_plain_ppm(&self, file: &mut impl Write) -> Result<(), Error>;
@@ -25,7 +25,7 @@ pub trait Image {
 fn compute_sanlines(
     scanlines: std::ops::Range<usize>,
     width: usize,
-    progress_tx: std::sync::mpsc::Sender<bool>,
+    progress_tx: mpsc::Sender<bool>,
     f: Arc<impl Fn(usize, usize) -> Vec3>,
 ) -> Vec<u8> {
     scanlines
@@ -49,7 +49,7 @@ impl Image for image::RgbImage {
         width: usize,
         height: usize,
         threads: usize,
-        tx: std::sync::mpsc::Sender<bool>,
+        tx: mpsc::Sender<bool>,
         f: impl Fn(usize, usize) -> Vec3 + Sync + Send + 'static,
     ) -> Self {
         // Calculations on how to distribute the scanlines evenly

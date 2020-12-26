@@ -95,7 +95,7 @@ impl PerlinNoiseGenerator {
     fn permute(perm: &mut [usize; POINT_COUNT]) {
         for i in (0..perm.len()).rev() {
             use rand::Rng;
-            let target = rand::thread_rng().gen_range(0, i + 1);
+            let target = rand::thread_rng().gen_range(0..i + 1);
             perm.swap(i, target);
         }
     }

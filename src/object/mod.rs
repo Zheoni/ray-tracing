@@ -12,3 +12,7 @@ mod aarect;
 pub use aarect::*;
 mod block;
 pub use block::*;
+mod rotate;
+pub use rotate::*;
+mod translate;
+pub use translate::*;

@@ -1,8 +1,8 @@
 use crate::camera::CameraConfig;
 use crate::constant_medium::ConstantMedium;
-use crate::hittable::{Hittable, HittableList, RotateY, Translate};
+use crate::hittable::{Hittable, HittableList};
 use crate::material::*;
-use crate::objects::*;
+use crate::object::*;
 use crate::texture::*;
 use vec3::Vec3;
 
@@ -91,7 +91,7 @@ fn random_spheres() -> Scene {
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Vec3::random_in_range(0.5, 1.0);
-                    let fuzz = rand::thread_rng().gen_range(0.0, 0.5);
+                    let fuzz = rand::thread_rng().gen_range(0.0..0.5);
 
                     objects.push(Box::new(Sphere {
                         center,
@@ -182,7 +182,7 @@ fn random_bouncing_spheres() -> Scene {
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Vec3::random_in_range(0.5, 1.0);
-                    let fuzz = rand::thread_rng().gen_range(0.0, 0.5);
+                    let fuzz = rand::thread_rng().gen_range(0.0..0.5);
 
                     objects.push(Box::new(Sphere {
                         center,
@@ -269,7 +269,7 @@ fn random_spheres_checker() -> Scene {
                 } else if choose_mat < 0.95 {
                     // metal
                     let albedo = Vec3::random_in_range(0.5, 1.0);
-                    let fuzz = rand::thread_rng().gen_range(0.0, 0.5);
+                    let fuzz = rand::thread_rng().gen_range(0.0..0.5);
 
                     objects.push(Box::new(Sphere {
                         center,
@@ -589,7 +589,7 @@ fn final_scene() -> Scene {
             let z0 = -1000.0 + j as f64 * w;
             let y0 = 0.0;
             let x1 = x0 + w;
-            let y1 = rng.gen_range(1.0, 101.0);
+            let y1 = rng.gen_range(1.0..101.0);
             let z1 = z0 + w;
 
             boxes.push(Box::new(Block::new(

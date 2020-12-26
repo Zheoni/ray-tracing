@@ -8,7 +8,7 @@ mod constant_medium;
 mod hittable;
 mod image_helper;
 mod material;
-mod objects;
+mod object;
 mod ray;
 mod render;
 mod scenes;
