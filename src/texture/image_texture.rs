@@ -2,13 +2,36 @@ use super::*;
 use crate::Clampable;
 use image::io::Reader as ImageReader;
 
+/// Texture of an image
 #[derive(Clone)]
 pub struct ImageTexture {
     img: image::RgbImage,
 }
 
+/// Error that [ImageTexture::new] can return
+#[derive(Debug)]
+pub enum ImageTextureError {
+    /// Error opening or reading the image file.
+    IOError(std::io::Error),
+    /// Error decoding the image. Usually, format not supported.
+    DecodeError(image::ImageError),
+}
+
+impl From<std::io::Error> for ImageTextureError {
+    fn from(cause: std::io::Error) -> Self {
+        ImageTextureError::IOError(cause)
+    }
+}
+
+impl From<image::ImageError> for ImageTextureError {
+    fn from(cause: image::ImageError) -> Self {
+        ImageTextureError::DecodeError(cause)
+    }
+}
+
 impl ImageTexture {
-    pub fn new(filename: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    /// Creates a new [ImageTexture] reading the image of the given path.
+    pub fn new(filename: &str) -> Result<Self, ImageTextureError> {
         let img = ImageReader::open(filename)?.decode()?.into_rgb8();
         Ok(Self { img })
     }

@@ -1,5 +1,6 @@
 use super::*;
 
+/// Rotate transformation in the Y axis
 pub struct RotateY<H: Hittable> {
     object: H,
     sin_theta: f64,
@@ -8,6 +9,7 @@ pub struct RotateY<H: Hittable> {
 }
 
 impl<H: Hittable> RotateY<H> {
+    /// Creates a new rotated object with an angle
     pub fn new(object: H, angle: f64) -> Self {
         let angle = angle.to_radians();
         let sin_theta = angle.sin();

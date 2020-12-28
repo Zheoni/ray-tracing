@@ -1,8 +1,11 @@
 use super::*;
 
+/// Metalic material
 #[derive(Clone)]
 pub struct Metal {
+    /// Color the material scatters
     pub albedo: Vec3,
+    /// Fuzz applied in reflections [`0.0`, `1.0`]
     pub fuzz: f64,
 }
 

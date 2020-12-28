@@ -1,14 +1,19 @@
 use super::*;
 
+/// Lambertian material
+///
+/// I think about this one like a plain color/texture
 #[derive(Clone)]
 pub struct Lambertian<T: Texture> {
+    /// Texture the material scatters on hit
     pub albedo: T,
 }
 
 impl Lambertian<SolidColor> {
+    /// Constructs a [Lambertian] material with a [SolidColor] as a texture
     pub fn from_color(color: Vec3) -> Self {
         Self {
-            albedo: SolidColor::new(color),
+            albedo: SolidColor { color },
         }
     }
 }

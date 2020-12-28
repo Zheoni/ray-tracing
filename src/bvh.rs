@@ -6,18 +6,26 @@ use std::cmp::Ordering;
 
 use rand::Rng;
 
+/// Bounding Volume Hierachy
+///
+/// This structure allow to organize [Hittable] trait objects and
+/// efficiently get a ray hit of them.
 pub struct BVH {
     node: BVHNode,
     b_box: AABB,
 }
 
-pub enum BVHNode {
+/// Node of the BVH tree
+enum BVHNode {
+    /// [Node] containing 2 other BVHs
     Node { left: Box<BVH>, right: Box<BVH> },
+    /// Leaf containing a [Hittable]
     Leaf(Box<dyn Hittable>),
 }
 
 impl BVH {
-    pub fn build_tree(mut objects: Vec<Box<dyn Hittable>>, time0: f64, time1: f64) -> Self {
+    /// Builds a BVH from a [Vec] of [Hittable]
+    pub fn build(mut objects: Vec<Box<dyn Hittable>>, time0: f64, time1: f64) -> Self {
         use BVHNode::*;
         let axis: usize = rand::thread_rng().gen_range(0..3);
         assert!(axis < 3);
@@ -35,12 +43,8 @@ impl BVH {
                 objects.sort_by(|a, b| box_compare(a.borrow(), b.borrow(), axis));
                 let mid = objects.len() / 2;
 
-                let right = Box::new(Self::build_tree(
-                    objects.drain(mid..).collect(),
-                    time0,
-                    time1,
-                ));
-                let left = Box::new(Self::build_tree(objects, time0, time1));
+                let right = Box::new(Self::build(objects.drain(mid..).collect(), time0, time1));
+                let left = Box::new(Self::build(objects, time0, time1));
 
                 let box_left = left.bounding_box(time0, time1);
                 let box_right = right.bounding_box(time0, time1);
@@ -59,8 +63,9 @@ impl BVH {
         }
     }
 
+    /// Build a BVH from a [HittableList]
     pub fn from_scene(scene: HittableList, time0: f64, time1: f64) -> Self {
-        Self::build_tree(scene.objects, time0, time1)
+        Self::build(scene.objects, time0, time1)
     }
 }
 

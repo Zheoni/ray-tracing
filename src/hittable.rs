@@ -3,11 +3,16 @@ use crate::material::Material;
 use crate::ray::Ray;
 use vec3::Vec3;
 
+/// Allows a struct to interact with light; being hitted by
+/// a ray
 pub trait Hittable: Send + Sync {
+    /// Checks if the ray hits in the given time the struct and if so returns a
+    /// [Some] value with a [HitRecord], else return [None]
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
     fn bounding_box(&self, time0: f64, time1: f64) -> Option<AABB>;
 }
 
+/// Struct that implements [Hittable] but is never hittet neither it has a bounding box
 pub struct Unhittable;
 impl Hittable for Unhittable {
     fn hit(&self, _r: &Ray, _t_min: f64, _t_max: f64) -> Option<HitRecord> {
@@ -18,6 +23,7 @@ impl Hittable for Unhittable {
     }
 }
 
+/// Data returned from a ray hit into a [Hittable]
 pub struct HitRecord<'a> {
     pub point: Vec3,
     pub normal: Vec3,
@@ -30,7 +36,7 @@ pub struct HitRecord<'a> {
 
 impl<'a> HitRecord<'a> {
     /// Creates a new [HitRecord] where the normal will
-    /// always points against the ray and [HitRecord.front_face]
+    /// always points against the ray and [front_face](HitRecord::front_face)
     /// tell us if the normal is points inwards or outwards the object.
     pub fn new(
         r: &Ray,
@@ -55,6 +61,8 @@ impl<'a> HitRecord<'a> {
         hr
     }
 
+    /// Sets the [front_face](HitRecord::front_face) and [normal][HitRecord::normal]
+    /// calculating it from the given ray and outward normal (outward from the object)
     pub fn set_face_normal(&mut self, r: &Ray, outward_normal: Vec3) {
         self.front_face = r.direction.dot(&outward_normal) < 0.0;
         self.normal = if self.front_face {
@@ -65,11 +73,14 @@ impl<'a> HitRecord<'a> {
     }
 }
 
+/// List of hittables that implements [Hittable] too
 pub struct HittableList {
     pub objects: Vec<Box<dyn Hittable>>,
 }
 
 impl Hittable for HittableList {
+    /// Returns the hit of the closer object. Tests the hit for every object in the
+    /// list.
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut rec: Option<HitRecord> = None;
         let mut closest_so_far = t_max;
@@ -84,6 +95,7 @@ impl Hittable for HittableList {
         rec
     }
 
+    /// Returns the bounding box of all the elements of the list
     fn bounding_box(&self, time0: f64, time1: f64) -> Option<AABB> {
         if self.objects.is_empty() {
             None

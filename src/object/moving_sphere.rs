@@ -1,6 +1,7 @@
 use super::*;
 use crate::aabb::surrounding_box;
 
+/// Dynamic sphere that move linealy over time
 #[derive(Clone)]
 pub struct MovingSphere<M: Material + Clone> {
     pub center0: Vec3,
@@ -12,6 +13,7 @@ pub struct MovingSphere<M: Material + Clone> {
 }
 
 impl<M: Material + Clone> MovingSphere<M> {
+    /// Calculates the center of the sphere at a given time
     #[inline]
     pub fn center(&self, time: f64) -> Vec3 {
         self.center0

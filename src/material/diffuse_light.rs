@@ -1,14 +1,19 @@
 use super::*;
 
+/// Diffuse light material
+///
+/// Does not scatters lay but emits a texture
 #[derive(Clone)]
 pub struct DiffuseLight<T: Texture> {
+    /// Texture the material emits
     emit: T,
 }
 
 impl DiffuseLight<SolidColor> {
+    /// Constructs a [DiffuseLight] material with a [SolidColor] as a texture
     pub fn from_color(color: Vec3) -> Self {
         Self {
-            emit: SolidColor::new(color),
+            emit: SolidColor { color },
         }
     }
 }

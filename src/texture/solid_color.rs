@@ -1,15 +1,14 @@
 use super::*;
 
+/// Texture of a solid color
 #[derive(Clone)]
 pub struct SolidColor {
-    color: Vec3,
+    /// Color of the texture
+    pub color: Vec3,
 }
 
 impl SolidColor {
-    pub fn new(color: Vec3) -> Self {
-        Self { color }
-    }
-
+    /// Creates a new [SolidColor] texture with the given RGB values
     #[allow(unused)]
     pub fn rgb(red: f64, green: f64, blue: f64) -> Self {
         Self {

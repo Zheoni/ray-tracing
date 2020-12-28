@@ -1,6 +1,9 @@
 use super::*;
 use perlin_noise::PNG;
 
+/// Texture of noise similar to marble
+///
+/// This texture uses internally a Perlin Noise Generator
 #[derive(Clone)]
 pub struct NoiseTexture {
     noise: PNG,
@@ -8,6 +11,7 @@ pub struct NoiseTexture {
 }
 
 impl NoiseTexture {
+    /// Creates a new [NoiseTexture] and initializes its internal Perlin Noise Generator.
     pub fn new(scale: f64) -> Self {
         Self {
             noise: PNG::new(),

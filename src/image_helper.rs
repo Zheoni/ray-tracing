@@ -2,7 +2,7 @@ use crate::Clampable;
 use image::Pixel;
 use std::io::{Error, Write};
 use std::ops::Mul;
-use std::sync::{Arc, mpsc};
+use std::sync::{mpsc, Arc};
 use vec3::Vec3;
 
 #[inline]

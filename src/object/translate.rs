@@ -1,11 +1,13 @@
 use super::*;
 
+/// Translate transformation
 pub struct Translate<H: Hittable> {
-    object: H,
-    offset: Vec3,
+    pub object: H,
+    pub offset: Vec3,
 }
 
 impl<H: Hittable> Translate<H> {
+    /// Creates a new translated object by a given offset
     pub fn new(object: H, offset: Vec3) -> Self {
         Self { object, offset }
     }

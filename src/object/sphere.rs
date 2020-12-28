@@ -1,5 +1,6 @@
 use super::*;
 
+/// Sphere object
 #[derive(Clone)]
 pub struct Sphere<M: Material + Clone> {
     pub center: Vec3,
@@ -7,6 +8,9 @@ pub struct Sphere<M: Material + Clone> {
     pub material: M,
 }
 
+/// Calculates the coords of a hit in an sphere
+///
+/// The `p` parameter is a normal to the sphere surface
 #[inline]
 pub fn get_sphere_uv(p: &Vec3) -> (f64, f64) {
     use std::f64::consts::{PI, TAU};

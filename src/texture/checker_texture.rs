@@ -1,5 +1,6 @@
 use super::*;
 
+/// Texture composed of a checker pattern of 2 other textures
 #[derive(Clone)]
 pub struct CheckerTexture<T1: Texture, T2: Texture> {
     odd: T1,
@@ -7,10 +8,11 @@ pub struct CheckerTexture<T1: Texture, T2: Texture> {
 }
 
 impl CheckerTexture<SolidColor, SolidColor> {
+    /// Creates a [CheckerTexture] composed of 2 [SolidColor] textures
     pub fn from_colors(odd: Vec3, even: Vec3) -> Self {
         Self {
-            odd: SolidColor::new(odd),
-            even: SolidColor::new(even),
+            odd: SolidColor { color: odd },
+            even: SolidColor { color: even },
         }
     }
 }

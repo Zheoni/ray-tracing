@@ -2,19 +2,23 @@ use super::*;
 
 const AABB_ZERO_PADDING: f64 = 0.0001;
 
+/// Defines the axles a [Rect] is aligned to
 pub trait RectAxis: Send + Sync {
     const AXIS: Axis;
     const OTHER1: Axis;
     const OTHER2: Axis;
 }
 
+/// Axis aligned rectangle
 #[derive(Clone)]
 pub struct Rect<A: RectAxis, M: Material> {
+    /// Dictates to which axles the rectangle is aligned to
     pub in_plane: A,
     pub a0: f64,
     pub a1: f64,
     pub b0: f64,
     pub b1: f64,
+    /// Coord of the plane the rectangle is aligned to
     pub k: f64,
     pub material: M,
 }

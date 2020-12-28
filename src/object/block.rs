@@ -1,5 +1,6 @@
 use super::*;
 
+/// Block... or Box :)
 pub struct Block {
     pub p0: Vec3,
     pub p1: Vec3,

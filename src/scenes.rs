@@ -602,7 +602,7 @@ fn final_scene() -> Scene {
 
     let mut objects: Vec<Box<dyn Hittable>> = Vec::new();
 
-    objects.push(Box::new(BVH::build_tree(boxes, 0.0, 1.0)));
+    objects.push(Box::new(BVH::build(boxes, 0.0, 1.0)));
 
     let light = DiffuseLight::from_color(Vec3::splat(7.0));
     objects.push(Box::new(Rect {
@@ -693,7 +693,7 @@ fn final_scene() -> Scene {
     }
 
     objects.push(Box::new(Translate::new(
-        RotateY::new(BVH::build_tree(boxes, 0.0, 1.0), 15.0),
+        RotateY::new(BVH::build(boxes, 0.0, 1.0), 15.0),
         Vec3::new(-100.0, 270.0, 395.0),
     )));
 

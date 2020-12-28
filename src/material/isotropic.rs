@@ -1,14 +1,20 @@
 use super::*;
 
+/// Isotropic material
+///
+/// Currently used as a smoke approximation as it scatters light
+/// intoa random direction
 #[derive(Clone)]
 pub struct Isotropic<T: Texture> {
+    /// Texture the material scatters
     pub albedo: T,
 }
 
 impl Isotropic<SolidColor> {
+    /// Constructs a [Isotropic] material with a [SolidColor] as a texture
     pub fn from_color(color: Vec3) -> Self {
         Self {
-            albedo: SolidColor::new(color),
+            albedo: SolidColor { color },
         }
     }
 }

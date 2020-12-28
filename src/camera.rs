@@ -3,17 +3,27 @@ use vec3::Vec3;
 
 use rand::Rng;
 
+/// Configuration of the camera
 pub struct CameraConfig {
+    /// Position of the camera
     pub lookfrom: Vec3,
+    /// Position where the camera is pointing to
     pub lookat: Vec3,
+    /// "View UP" vector. Defines the angle of the camera
     pub vup: Vec3,
+    /// Vertical FOV
     pub vfov: f64,
+    /// Aperture. 0 means perfect focus
     pub aperture: f64,
+    /// Focus distance from [CameraConfig::lookfrom]
     pub focus_distance: f64,
+    /// Start of exposition
     pub time0: f64,
+    /// End of exposition
     pub time1: f64,
 }
 
+/// Camera struct capable of generating rays
 pub struct Camera {
     origin: Vec3,
     lower_left_corner: Vec3,
@@ -29,12 +39,14 @@ pub struct Camera {
 }
 
 impl Camera {
+    /// Creates a new [Camera] from a [CameraConfig]
     pub fn new(c: &CameraConfig, aspect_ratio: f64) -> Self {
         let theta = c.vfov.to_radians();
         let h = (theta / 2.0).tan();
         let viewport_height = 2.0 * h;
         let viewport_width = aspect_ratio * viewport_height;
 
+        // Build an orthonormal basis
         let w = (c.lookfrom - c.lookat).unit_vector();
         let u = c.vup.cross(&w).unit_vector();
         let v = w.cross(&u);
@@ -59,6 +71,7 @@ impl Camera {
         }
     }
 
+    /// Generates a new [Ray] for the pixel (`u`, `v`)
     pub fn get_ray(&self, u: f64, v: f64) -> Ray {
         let rd = self.lens_radius * Vec3::random_in_unit_disk();
         let offset = self.u * rd.x() + self.v * rd.y();

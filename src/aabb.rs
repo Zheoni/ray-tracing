@@ -1,6 +1,11 @@
 use crate::ray::Ray;
 use vec3::Vec3;
 
+/// Axis Aligned Bounding Box
+///
+/// This struct is used to surround [Hittable](crate::hittable::Hittable) objects
+/// and provide a **fast** [Self::hit] function to know if a ray hits the bounding
+/// box.
 #[derive(Clone, Default)]
 pub struct AABB {
     pub minimum: Vec3,
@@ -8,6 +13,7 @@ pub struct AABB {
 }
 
 impl AABB {
+    /// Returns `true` if the ray hits the [AABB]
     pub fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> bool {
         let inv_d = r.direction.map(f64::recip);
         let t0 = (self.minimum - r.origin) * inv_d;
@@ -24,6 +30,7 @@ impl AABB {
     }
 }
 
+/// Creates a new [AABB] surrounding the other 2 given
 #[must_use]
 pub fn surrounding_box(box0: &AABB, box1: &AABB) -> AABB {
     let small = Vec3::new(

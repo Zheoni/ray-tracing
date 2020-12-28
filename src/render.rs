@@ -8,6 +8,7 @@ use std::sync::mpsc;
 use std::time::{Duration, Instant};
 use vec3::Vec3;
 
+/// Configuration of a render call
 pub struct RenderConfig {
     pub world: Box<dyn Hittable>,
     pub camera: Camera,
@@ -20,6 +21,8 @@ pub struct RenderConfig {
     pub print_debug: bool,
 }
 
+/// Renders an image from a given [RenderConfig]. Returns the rendered
+/// [RgbImage] and a [Duration] telling us how long the render took.
 pub fn render(
     RenderConfig {
         image_width: width,
@@ -75,7 +78,7 @@ pub fn render(
 }
 
 #[cfg(feature = "recursive-tracer")]
-pub fn ray_color(r: Ray, background: &Vec3, world: &dyn Hittable, depth: u32) -> Vec3 {
+fn ray_color(r: Ray, background: &Vec3, world: &dyn Hittable, depth: u32) -> Vec3 {
     // If maximum number of rays
     if depth == 0 {
         return Vec3::zero();

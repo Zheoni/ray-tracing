@@ -6,6 +6,8 @@ use crate::texture::SolidColor;
 use crate::texture::Texture;
 use vec3::Vec3;
 
+/// Medium that interacts with light based on a phase function and
+/// its density
 pub struct ConstantMedium<H: Hittable, M: Material> {
     boundary: H,
     phase_function: M,
@@ -24,6 +26,8 @@ impl<H: Hittable, T: Texture> ConstantMedium<H, Isotropic<T>> {
 }
 
 impl<H: Hittable> ConstantMedium<H, Isotropic<SolidColor>> {
+    /// Creates a new [ConstantMedium] with a boundary defined by a [Hittable] a
+    /// density of `d` and a given color. It's an approximation to smoke.
     pub fn from_color(boundary: H, d: f64, color: Vec3) -> Self {
         Self {
             boundary,

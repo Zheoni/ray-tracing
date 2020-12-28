@@ -1,3 +1,10 @@
+//! Contains all the diferent geometric objects and trasformations to
+//! those objects supported.
+//!
+//! Objects implement the [Hittable] trait have a [Material].
+//! Transformations owns some [Hittable] and also implements the [Hittable]
+//! trait by themselfs.
+
 use crate::aabb::AABB;
 use crate::hittable::{HitRecord, Hittable, HittableList};
 use crate::material::Material;
