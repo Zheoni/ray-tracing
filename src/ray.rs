@@ -1,7 +1,4 @@
-use crate::hittable::Hittable;
 use vec3::Vec3;
-
-use std::sync::Arc;
 
 /// Representation of a Ray for the raytracer.
 #[derive(Debug, Clone, PartialEq)]
@@ -32,33 +29,6 @@ impl Ray {
     /// Returns the position of the Ray *at* time `t`.
     pub fn at(&self, t: f64) -> Vec3 {
         self.origin + t * self.direction
-    }
-
-    pub fn ray_color(&self, background: &Vec3, world: Arc<dyn Hittable>, depth: u32) -> Vec3 {
-        // If maximum number of rays
-        if depth == 0 {
-            return Vec3::zero();
-        }
-
-        // If hit with some object. The min hit distance is not 0 because
-        // of course float precission. Not every ray will match exactly with 0.0
-        if let Some(hit) = world.hit(self, 0.001, f64::INFINITY) {
-            // if hits something
-
-            // Calculate the light emitted
-            let emitted = hit.material.emitted(hit.u, hit.v, &hit.point);
-
-            if let Some((attenuation, scattered)) = hit.material.scatter(self, &hit) {
-                // if material scatters
-                emitted + attenuation * scattered.ray_color(background, world, depth - 1)
-            } else {
-                // if it not, only emits
-                emitted
-            }
-        } else {
-            // if hits nothing, the background is visible
-            *background
-        }
     }
 }
 

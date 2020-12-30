@@ -1,15 +1,19 @@
 use crate::aabb::{surrounding_box, AABB};
 use crate::material::Material;
 use crate::ray::Ray;
-use std::sync::Arc;
 use vec3::Vec3;
 
+/// Allows a struct to interact with light; being hitted by
+/// a ray
 pub trait Hittable: Send + Sync {
+    /// Checks if the ray hits in the given time the struct and if so returns a
+    /// [Some] value with a [HitRecord], else return [None]
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
     fn bounding_box(&self, time0: f64, time1: f64) -> Option<AABB>;
 }
 
-pub struct Unhittable {}
+/// Struct that implements [Hittable] but is never hittet neither it has a bounding box
+pub struct Unhittable;
 impl Hittable for Unhittable {
     fn hit(&self, _r: &Ray, _t_min: f64, _t_max: f64) -> Option<HitRecord> {
         None
@@ -19,6 +23,7 @@ impl Hittable for Unhittable {
     }
 }
 
+/// Data returned from a ray hit into a [Hittable]
 pub struct HitRecord<'a> {
     pub point: Vec3,
     pub normal: Vec3,
@@ -31,7 +36,7 @@ pub struct HitRecord<'a> {
 
 impl<'a> HitRecord<'a> {
     /// Creates a new [HitRecord] where the normal will
-    /// always points against the ray and [HitRecord.front_face]
+    /// always points against the ray and [front_face](HitRecord::front_face)
     /// tell us if the normal is points inwards or outwards the object.
     pub fn new(
         r: &Ray,
@@ -56,6 +61,8 @@ impl<'a> HitRecord<'a> {
         hr
     }
 
+    /// Sets the [front_face](HitRecord::front_face) and [normal][HitRecord::normal]
+    /// calculating it from the given ray and outward normal (outward from the object)
     pub fn set_face_normal(&mut self, r: &Ray, outward_normal: Vec3) {
         self.front_face = r.direction.dot(&outward_normal) < 0.0;
         self.normal = if self.front_face {
@@ -66,11 +73,14 @@ impl<'a> HitRecord<'a> {
     }
 }
 
+/// List of hittables that implements [Hittable] too
 pub struct HittableList {
-    pub objects: Vec<Arc<dyn Hittable>>,
+    pub objects: Vec<Box<dyn Hittable>>,
 }
 
 impl Hittable for HittableList {
+    /// Returns the hit of the closer object. Tests the hit for every object in the
+    /// list.
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut rec: Option<HitRecord> = None;
         let mut closest_so_far = t_max;
@@ -85,6 +95,7 @@ impl Hittable for HittableList {
         rec
     }
 
+    /// Returns the bounding box of all the elements of the list
     fn bounding_box(&self, time0: f64, time1: f64) -> Option<AABB> {
         if self.objects.is_empty() {
             None
@@ -99,129 +110,5 @@ impl Hittable for HittableList {
             }
             Some(temp_box)
         }
-    }
-}
-
-pub struct Translate {
-    object: Arc<dyn Hittable>,
-    offset: Vec3,
-}
-
-impl Translate {
-    pub fn new(object: Arc<dyn Hittable>, offset: Vec3) -> Self {
-        Self { object, offset }
-    }
-}
-
-impl Hittable for Translate {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let moved_r = Ray::new(r.origin - self.offset, r.direction, r.time);
-
-        if let Some(mut hit) = self.object.hit(&moved_r, t_min, t_max) {
-            hit.point += self.offset;
-            hit.set_face_normal(&moved_r, hit.normal);
-            Some(hit)
-        } else {
-            None
-        }
-    }
-
-    fn bounding_box(&self, time0: f64, time1: f64) -> Option<AABB> {
-        if let Some(mut bb) = self.object.bounding_box(time0, time1) {
-            bb.minimum += self.offset;
-            bb.maximum += self.offset;
-            Some(bb)
-        } else {
-            None
-        }
-    }
-}
-
-pub struct RotateY {
-    object: Arc<dyn Hittable>,
-    sin_theta: f64,
-    cos_theta: f64,
-    bbox: Option<AABB>,
-}
-
-impl RotateY {
-    pub fn new(object: Arc<dyn Hittable>, angle: f64) -> Self {
-        let angle = angle.to_radians();
-        let sin_theta = angle.sin();
-        let cos_theta = angle.cos();
-
-        let bbox = if let Some(bb) = object.bounding_box(0.0, 1.0) {
-            let mut min = Vec3::splat(f64::INFINITY);
-            let mut max = Vec3::splat(f64::NEG_INFINITY);
-
-            for i in 0..2 {
-                for j in 0..2 {
-                    for k in 0..2 {
-                        let (i, j, k) = (i as f64, j as f64, k as f64);
-
-                        let x = i * bb.maximum.x() + (1.0 - i) * bb.minimum.x();
-                        let y = j * bb.maximum.y() + (1.0 - j) * bb.minimum.y();
-                        let z = k * bb.maximum.z() + (1.0 - k) * bb.minimum.z();
-
-                        let newx = cos_theta * x + sin_theta * z;
-                        let newz = -sin_theta * x + cos_theta * z;
-
-                        let tester = Vec3::new(newx, y, newz);
-                        for c in 0..3 {
-                            min[c] = min[c].min(tester[c]);
-                            max[c] = max[c].max(tester[c]);
-                        }
-                    }
-                }
-            }
-            Some(AABB {
-                minimum: min,
-                maximum: max,
-            })
-        } else {
-            None
-        };
-
-        Self {
-            object,
-            sin_theta,
-            cos_theta,
-            bbox,
-        }
-    }
-}
-
-impl Hittable for RotateY {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut origin = r.origin;
-        origin[0] = self.cos_theta * r.origin[0] - self.sin_theta * r.origin[2];
-        origin[2] = self.sin_theta * r.origin[0] + self.cos_theta * r.origin[2];
-
-        let mut direction = r.direction;
-        direction[0] = self.cos_theta * r.direction[0] - self.sin_theta * r.direction[2];
-        direction[2] = self.sin_theta * r.direction[0] + self.cos_theta * r.direction[2];
-
-        let rotated_r = Ray::new(origin, direction, r.time);
-
-        if let Some(mut hit) = self.object.hit(&rotated_r, t_min, t_max) {
-            let mut point = hit.point;
-            point[0] = self.cos_theta * hit.point[0] + self.sin_theta * hit.point[2];
-            point[2] = -self.sin_theta * hit.point[0] + self.cos_theta * hit.point[2];
-
-            let mut normal = hit.normal;
-            normal[0] = self.cos_theta * hit.normal[0] + self.sin_theta * hit.normal[2];
-            normal[2] = -self.sin_theta * hit.normal[0] + self.cos_theta * hit.normal[2];
-
-            hit.point = point;
-            hit.normal = normal;
-
-            Some(hit)
-        } else {
-            None
-        }
-    }
-
-    fn bounding_box(&self, _time0: f64, _time1: f64) -> Option<AABB> {
-        self.bbox.clone()
     }
 }

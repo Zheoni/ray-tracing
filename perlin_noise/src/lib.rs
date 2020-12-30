@@ -1,7 +1,10 @@
+#![allow(clippy::many_single_char_names)]
+
 use vec3::Vec3;
 
 const POINT_COUNT: usize = 256;
 
+#[derive(Clone)]
 pub struct PerlinNoiseGenerator {
     ranvec: [Vec3; POINT_COUNT],
     perm_x: [usize; POINT_COUNT],
@@ -28,6 +31,7 @@ impl PerlinNoiseGenerator {
         let k = p[2].floor() as isize;
         let mut c = [[[Vec3::zero(); 2]; 2]; 2];
 
+        #[allow(clippy::needless_range_loop)]
         for di in 0..2 {
             for dj in 0..2 {
                 for dk in 0..2 {
@@ -91,7 +95,7 @@ impl PerlinNoiseGenerator {
     fn permute(perm: &mut [usize; POINT_COUNT]) {
         for i in (0..perm.len()).rev() {
             use rand::Rng;
-            let target = rand::thread_rng().gen_range(0, i + 1);
+            let target = rand::thread_rng().gen_range(0..i + 1);
             perm.swap(i, target);
         }
     }
@@ -102,6 +106,7 @@ impl PerlinNoiseGenerator {
         let ww = w * w * (3.0 - 2.0 * w);
 
         let mut accum = 0.0;
+        #[allow(clippy::needless_range_loop)]
         for i in 0..2 {
             for j in 0..2 {
                 for k in 0..2 {

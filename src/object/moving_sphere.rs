@@ -1,23 +1,27 @@
 use super::*;
 use crate::aabb::surrounding_box;
 
-pub struct MovingSphere {
+/// Dynamic sphere that move linealy over time
+#[derive(Clone)]
+pub struct MovingSphere<M: Material + Clone> {
     pub center0: Vec3,
     pub center1: Vec3,
     pub time0: f64,
     pub time1: f64,
     pub radius: f64,
-    pub material: Arc<dyn Material>,
+    pub material: M,
 }
 
-impl MovingSphere {
+impl<M: Material + Clone> MovingSphere<M> {
+    /// Calculates the center of the sphere at a given time
+    #[inline]
     pub fn center(&self, time: f64) -> Vec3 {
         self.center0
             + ((time - self.time0) / (self.time1 - self.time0)) * (self.center1 - self.center0)
     }
 }
 
-impl Hittable for MovingSphere {
+impl<M: Material + Clone> Hittable for MovingSphere<M> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let center_now = self.center(r.time);
         let oc = r.origin - center_now;
@@ -45,16 +49,8 @@ impl Hittable for MovingSphere {
 
         let hit_point = r.at(root);
         let outward_normal = (hit_point - center_now) / self.radius;
-        let (u, v) = super::sphere::Sphere::get_sphere_uv(&outward_normal);
-        let record = HitRecord::new(
-            &r,
-            root,
-            u,
-            v,
-            hit_point,
-            outward_normal,
-            self.material.as_ref(),
-        );
+        let (u, v) = super::sphere::get_sphere_uv(&outward_normal);
+        let record = HitRecord::new(&r, root, u, v, hit_point, outward_normal, &self.material);
 
         Some(record)
     }

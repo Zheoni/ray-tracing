@@ -2,36 +2,42 @@ use crate::aabb::AABB;
 use crate::hittable::{HitRecord, Hittable};
 use crate::material::{Isotropic, Material};
 use crate::ray::Ray;
+use crate::texture::SolidColor;
 use crate::texture::Texture;
-use std::sync::Arc;
 use vec3::Vec3;
 
-pub struct ConstantMedium {
-    boundary: Arc<dyn Hittable>,
-    phase_function: Arc<dyn Material>,
+/// Medium that interacts with light based on a phase function and
+/// its density
+pub struct ConstantMedium<H: Hittable, M: Material> {
+    boundary: H,
+    phase_function: M,
     neg_inv_density: f64,
 }
 
-impl ConstantMedium {
+impl<H: Hittable, T: Texture> ConstantMedium<H, Isotropic<T>> {
     #[allow(unused)]
-    pub fn new(boundary: Arc<dyn Hittable>, d: f64, a: Arc<dyn Texture>) -> Self {
+    pub fn new(boundary: H, d: f64, albedo: T) -> Self {
         Self {
             boundary,
-            phase_function: Arc::new(Isotropic::new(a)),
-            neg_inv_density: -1.0 / d,
-        }
-    }
-
-    pub fn from_color(boundary: Arc<dyn Hittable>, d: f64, color: Vec3) -> Self {
-        Self {
-            boundary,
-            phase_function: Arc::new(Isotropic::from_color(color)),
+            phase_function: Isotropic { albedo },
             neg_inv_density: -1.0 / d,
         }
     }
 }
 
-impl Hittable for ConstantMedium {
+impl<H: Hittable> ConstantMedium<H, Isotropic<SolidColor>> {
+    /// Creates a new [ConstantMedium] with a boundary defined by a [Hittable] a
+    /// density of `d` and a given color. It's an approximation to smoke.
+    pub fn from_color(boundary: H, d: f64, color: Vec3) -> Self {
+        Self {
+            boundary,
+            phase_function: Isotropic::from_color(color),
+            neg_inv_density: -1.0 / d,
+        }
+    }
+}
+
+impl<H: Hittable, M: Material> Hittable for ConstantMedium<H, M> {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut hit1 = self.boundary.hit(r, f64::NEG_INFINITY, f64::INFINITY)?;
         let mut hit2 = self.boundary.hit(r, hit1.t + 0.0001, f64::INFINITY)?;
@@ -65,7 +71,7 @@ impl Hittable for ConstantMedium {
             1.0,
             point,
             normal,
-            self.phase_function.as_ref(),
+            &self.phase_function,
         ))
     }
 

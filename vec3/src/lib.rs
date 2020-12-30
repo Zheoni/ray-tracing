@@ -1,12 +1,20 @@
 use rand::Rng;
 use std::cmp::PartialEq;
 use std::convert::From;
+use std::iter::FromIterator;
 use std::ops::Deref;
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 use std::ops::{Index, IndexMut};
 
 /// This sets the error while comparing floats in Vec3s.
 const FLOAT_CMP_ERROR: f64 = 1e-8;
+
+/// Axis of the Vec3. Can be used for indexing
+pub enum Axis {
+    X = 0,
+    Y = 1,
+    Z = 2,
+}
 
 /// Three dimensional vector with opertors.
 ///
@@ -20,12 +28,14 @@ pub struct Vec3 {
 impl Vec3 {
     /// Creates a new vector with the given coords.
     #[must_use]
+    #[inline]
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { v: [x, y, z] }
     }
 
     /// Creates a new vector with all coords to `v`
     #[must_use]
+    #[inline]
     pub fn splat(v: f64) -> Self {
         Vec3 { v: [v; 3] }
     }
@@ -44,6 +54,7 @@ impl Vec3 {
 
     /// Creates a new random vector with coords in range \[0.0, 1.0\]
     #[must_use]
+    #[inline]
     pub fn random() -> Self {
         Vec3 {
             v: [rand::random(), rand::random(), rand::random()],
@@ -56,9 +67,9 @@ impl Vec3 {
         let mut rng = rand::thread_rng();
         Vec3 {
             v: [
-                rng.gen_range(min, max),
-                rng.gen_range(min, max),
-                rng.gen_range(min, max),
+                rng.gen_range(min..max),
+                rng.gen_range(min..max),
+                rng.gen_range(min..max),
             ],
         }
     }
@@ -74,6 +85,7 @@ impl Vec3 {
     }
 
     #[must_use]
+    #[inline]
     pub fn random_unit_vector() -> Self {
         Self::random_in_unit_sphere().unit_vector()
     }
@@ -92,7 +104,7 @@ impl Vec3 {
     pub fn random_in_unit_disk() -> Self {
         let mut rng = rand::thread_rng();
         loop {
-            let p = Self::new(rng.gen_range(-1.0, 1.0), rng.gen_range(-1.0, 1.0), 0.0);
+            let p = Self::new(rng.gen_range(-1.0..1.0), rng.gen_range(-1.0..1.0), 0.0);
             if p.length_squared() < 1.0 {
                 return p;
             }
@@ -106,21 +118,25 @@ impl Vec3 {
     }
 
     /// X coord getter
+    #[inline]
     pub fn x(&self) -> f64 {
         self.v[0]
     }
 
     /// Y coord getter
+    #[inline]
     pub fn y(&self) -> f64 {
         self.v[1]
     }
 
     /// Z coord getter
+    #[inline]
     pub fn z(&self) -> f64 {
         self.v[2]
     }
 
     /// Calculates the length of the vector
+    #[inline]
     pub fn length(&self) -> f64 {
         self.length_squared().sqrt()
     }
@@ -128,12 +144,14 @@ impl Vec3 {
     /// Calculates the squared lenght of the vetor.
     ///
     /// This is faster than only the [Vec3.length].
+    #[inline]
     pub fn length_squared(&self) -> f64 {
         let v = &self.v;
         v[0] * v[0] + v[1] * v[1] + v[2] * v[2]
     }
 
     /// Scales the vector in place multiplying every coord by `factor`.
+    #[inline]
     pub fn scale_mut(&mut self, factor: f64) -> &mut Self {
         self.v[0] *= factor;
         self.v[1] *= factor;
@@ -149,6 +167,7 @@ impl Vec3 {
     }
 
     /// Calculates the dot product of two vectors.
+    #[inline]
     pub fn dot(&self, other: &Self) -> f64 {
         self.v[0] * other.v[0] + self.v[1] * other.v[1] + self.v[2] * other.v[2]
     }
@@ -182,9 +201,56 @@ impl Vec3 {
         self.unit_vector_mut();
         self
     }
+
+    #[inline]
+    pub fn iter(&self) -> std::slice::Iter<f64> {
+        self.v.iter()
+    }
+
+    #[inline]
+    pub fn iter_mut(&mut self) -> std::slice::IterMut<f64> {
+        self.v.iter_mut()
+    }
+
+    #[inline]
+    pub fn reduce(self, f: impl Fn(f64, f64) -> f64) -> f64 {
+        f(f(self[0], self[1]), self[2])
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn map(self, mut f: impl FnMut(f64) -> f64) -> Self {
+        Vec3::new(f(self[0]), f(self[1]), f(self[2]))
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn zip_with(self, other: Vec3, mut f: impl FnMut(f64, f64) -> f64) -> Self {
+        Vec3::new(
+            f(self[0], other[0]),
+            f(self[1], other[1]),
+            f(self[2], other[2]),
+        )
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn zip_with3(
+        self,
+        other1: Vec3,
+        other2: Vec3,
+        mut f: impl FnMut(f64, f64, f64) -> f64,
+    ) -> Self {
+        Vec3::new(
+            f(self[0], other1[0], other2[0]),
+            f(self[1], other1[1], other2[1]),
+            f(self[2], other1[2], other2[2]),
+        )
+    }
 }
 
 impl AddAssign for Vec3 {
+    #[inline]
     fn add_assign(&mut self, other: Self) {
         self.v[0] += other.v[0];
         self.v[1] += other.v[1];
@@ -195,6 +261,7 @@ impl AddAssign for Vec3 {
 impl Add for Vec3 {
     type Output = Self;
 
+    #[inline]
     fn add(mut self, other: Self) -> Self {
         self += other;
         self
@@ -202,6 +269,7 @@ impl Add for Vec3 {
 }
 
 impl SubAssign for Vec3 {
+    #[inline]
     fn sub_assign(&mut self, other: Self) {
         self.v[0] -= other.v[0];
         self.v[1] -= other.v[1];
@@ -212,6 +280,7 @@ impl SubAssign for Vec3 {
 impl Sub for Vec3 {
     type Output = Self;
 
+    #[inline]
     fn sub(mut self, other: Self) -> Self {
         self -= other;
         self
@@ -221,17 +290,18 @@ impl Sub for Vec3 {
 impl Neg for Vec3 {
     type Output = Self;
 
-    fn neg(self) -> Self {
-        let mut v = [0f64; 3];
-        v[0] = -self.v[0];
-        v[1] = -self.v[1];
-        v[2] = -self.v[2];
-        Self { v }
+    #[inline]
+    fn neg(mut self) -> Self {
+        self.v[0] = -self.v[0];
+        self.v[1] = -self.v[1];
+        self.v[2] = -self.v[2];
+        self
     }
 }
 
 impl MulAssign<f64> for Vec3 {
     /// Overloaded operator for [Vec3.scale_mut]
+    #[inline]
     fn mul_assign(&mut self, other: f64) {
         self.scale_mut(other);
     }
@@ -241,6 +311,7 @@ impl Mul<f64> for Vec3 {
     type Output = Self;
 
     /// Overloaded operator for [Vec3.scale]
+    #[inline]
     fn mul(mut self, other: f64) -> Self {
         self *= other;
         self
@@ -251,6 +322,7 @@ impl Mul<Vec3> for f64 {
     type Output = Vec3;
 
     /// Overloaded operator for [Vec3.scale]
+    #[inline]
     fn mul(self, other: Vec3) -> Self::Output {
         other * self
     }
@@ -258,6 +330,7 @@ impl Mul<Vec3> for f64 {
 
 impl MulAssign<Vec3> for Vec3 {
     /// Multiplies elements one to one in place
+    #[inline]
     fn mul_assign(&mut self, other: Vec3) {
         self.v[0] *= other.v[0];
         self.v[1] *= other.v[1];
@@ -269,6 +342,7 @@ impl Mul<Vec3> for Vec3 {
     type Output = Vec3;
 
     /// Multiplies elements one to one
+    #[inline]
     fn mul(mut self, other: Vec3) -> Self::Output {
         self *= other;
         self
@@ -277,8 +351,9 @@ impl Mul<Vec3> for Vec3 {
 
 impl DivAssign<f64> for Vec3 {
     /// Overloaded operator for [Vec3.scale_mut] by `1.0 / factor`
+    #[inline]
     fn div_assign(&mut self, other: f64) {
-        self.scale_mut(1.0f64 / other);
+        self.scale_mut(other.recip());
     }
 }
 
@@ -286,6 +361,7 @@ impl Div<f64> for Vec3 {
     type Output = Self;
 
     /// Overloaded operator for [Vec3.scale] by `1.0 / factor`
+    #[inline]
     fn div(mut self, other: f64) -> Self {
         self /= other;
         self
@@ -296,6 +372,7 @@ impl Div<Vec3> for f64 {
     type Output = Vec3;
 
     /// Overloaded operator for [Vec3.scale] by `1.0 / factor`
+    #[inline]
     fn div(self, other: Vec3) -> Self::Output {
         other / self
     }
@@ -311,14 +388,31 @@ impl PartialEq for Vec3 {
 
 impl Index<usize> for Vec3 {
     type Output = f64;
+    #[inline]
     fn index(&self, index: usize) -> &Self::Output {
         &self.v[index]
     }
 }
 
+impl Index<Axis> for Vec3 {
+    type Output = f64;
+    #[inline]
+    fn index(&self, index: Axis) -> &Self::Output {
+        &self.v[index as usize]
+    }
+}
+
 impl IndexMut<usize> for Vec3 {
+    #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.v[index]
+    }
+}
+
+impl IndexMut<Axis> for Vec3 {
+    #[inline]
+    fn index_mut(&mut self, index: Axis) -> &mut Self::Output {
+        &mut self.v[index as usize]
     }
 }
 
@@ -333,6 +427,19 @@ impl Deref for Vec3 {
 impl From<[f64; 3]> for Vec3 {
     fn from(v: [f64; 3]) -> Self {
         Self { v }
+    }
+}
+
+impl FromIterator<f64> for Vec3 {
+    fn from_iter<T: IntoIterator<Item = f64>>(iter: T) -> Self {
+        let mut iter = iter.into_iter();
+        Self {
+            v: [
+                iter.next().unwrap(),
+                iter.next().unwrap(),
+                iter.next().unwrap(),
+            ],
+        }
     }
 }
 

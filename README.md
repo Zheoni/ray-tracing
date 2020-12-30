@@ -47,3 +47,8 @@ ARGS:
     <scene>     [possible values: spheres, bouncing_spheres, checker_ground, checker_spheres, perlin_spheres, earth,
                black, simple_light, cornell_box, cornell_smoke, final_scene]
 ```
+
+## Other repos
+
+- [cbiffle/rtiow-rust](https://github.com/cbiffle/rtiow-rust) has helped me to achieve a much faster aabb hit function.
+- [skyzh/raytracer.rs](https://github.com/skyzh/raytracer.rs) has helped me with the memory layout without so many references, using generics.
