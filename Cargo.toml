@@ -6,15 +6,12 @@ edition = "2018"
 publish = false
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[features]
-recursive-tracer = []
-
 [dependencies]
 rand = "0.8.0"
 num_cpus = "1.13.0"
 clap = "2.33.3"
 pbr = "1.0.3"
-image = "0.23.12"
+image = { version = "0.23.12", default-features = false, features = ["jpeg", "png", "pnm", "gif", "bmp"] }
 
 # My local crates
 vec3 = { path = "vec3" }

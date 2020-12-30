@@ -45,7 +45,7 @@ pub fn render(
     let (tx, rx) = mpsc::channel::<bool>();
 
     let num_pixels = width * height;
-    let mut pb = pbr::ProgressBar::new(num_pixels as u64);
+    let mut pb = pbr::ProgressBar::on(std::io::stderr(), num_pixels as u64);
     pb.set_max_refresh_rate(Some(std::time::Duration::from_millis(500)));
     pb.message("Pixels: ");
     // Progress bar thread
@@ -77,7 +77,6 @@ pub fn render(
     (image, elapsed)
 }
 
-#[cfg(feature = "recursive-tracer")]
 fn ray_color(r: Ray, background: &Vec3, world: &dyn Hittable, depth: u32) -> Vec3 {
     // If maximum number of rays
     if depth == 0 {
@@ -103,40 +102,4 @@ fn ray_color(r: Ray, background: &Vec3, world: &dyn Hittable, depth: u32) -> Vec
         // if hits nothing, the background is visible
         *background
     }
-}
-
-#[cfg(not(feature = "recursive-tracer"))]
-fn ray_color(mut ray: Ray, background: &Vec3, world: &dyn Hittable, max_bounces: u32) -> Vec3 {
-    // Light accumulated in the in the ray after all the interactions
-    let mut accum = Vec3::zero();
-    // Total attenuation
-    let mut strength = Vec3::one();
-
-    let mut bounces = 0;
-
-    // If hit with some object. The min hit distance is not 0 because
-    // of float precission. Not every ray will match exactly with 0.0
-    while let Some(hit) = world.hit(&ray, 0.001, f64::INFINITY) {
-        // Add the light emmited in the hit
-        accum += strength * hit.material.emitted(hit.u, hit.v, &hit.point);
-
-        // if material scatters
-        if let Some((attenuation, scattered)) = hit.material.scatter(&ray, &hit) {
-            // change current ray
-            ray = scattered;
-            // update ray strength
-            strength *= attenuation;
-        } else {
-            // if the ray is absorbed, no more calculations needed
-            return accum;
-        }
-
-        if bounces == max_bounces {
-            return accum;
-        }
-
-        bounces += 1;
-    }
-
-    *background
 }
